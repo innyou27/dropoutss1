@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>DROPOUT — ты выпал из системы</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a12; --bg2:#0e0e1a; --panel:rgba(20,20,34,.72); --panel2:rgba(30,30,50,.6);
+  --neon:#a855f7; --acid:#39ff88; --red:#ff3b6b; --gold:#ffd166; --blue:#4dc3ff; --tg:#2AABEE;
+  --txt:#e8e6f5; --dim:#8a87a8; --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:'Rubik',system-ui,sans-serif; overflow-x:hidden;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(168,85,247,.16),transparent),
+    radial-gradient(ellipse 60% 40% at 90% 110%,rgba(57,255,136,.08),transparent);
+}
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+h1,h2,h3,.hfont{font-family:'Unbounded',system-ui,sans-serif}
+#app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 14px 90px}
+
+/* ===== HEADER ===== */
+header{display:flex;align-items:center;gap:12px;padding:14px 0 10px;flex-wrap:wrap}
+#logo{
+  font-family:'Unbounded';font-weight:900;font-size:clamp(26px,6vw,40px);cursor:pointer;user-select:none;
+  background:linear-gradient(90deg,var(--acid),var(--neon));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 14px rgba(57,255,136,.5));position:relative;letter-spacing:2px;transition:transform .15s;
+}
+#logo:hover{transform:skewX(-4deg) scale(1.04)}
+#logo:active{transform:scale(.96)}
+#logo.glitch::after{content:'DROPOUT';position:absolute;left:2px;top:0;color:var(--red);opacity:.7;clip-path:inset(20% 0 55% 0);animation:gl .35s steps(2) infinite}
+#logo.glitch::before{content:'DROPOUT';position:absolute;left:-2px;top:0;color:var(--blue);opacity:.7;clip-path:inset(60% 0 15% 0);animation:gl .3s steps(2) infinite reverse}
+@keyframes gl{0%{transform:translate(0)}50%{transform:translate(-3px,1px)}100%{transform:translate(2px,-1px)}}
+.wallet{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.wchip{
+  display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid rgba(255,255,255,.08);
+  padding:7px 12px;border-radius:999px;font-weight:700;font-size:14px;backdrop-filter:blur(8px);cursor:pointer;transition:.2s;
+}
+.wchip:hover{border-color:var(--acid);box-shadow:0 0 14px rgba(57,255,136,.25)}
+.wchip.bump{animation:bump .4s}
+@keyframes bump{30%{transform:scale(1.18)}}
+.wchip .lbl{font-size:11px;color:var(--dim);font-weight:400}
+#topupBtn{background:linear-gradient(135deg,#f5b83d,#e0902a);color:#2a1a00;border:none}
+#topupBtn:hover{box-shadow:0 0 22px rgba(255,209,102,.55)}
+
+/* ===== NAV TABS ===== */
+nav{display:flex;gap:6px;overflow-x:auto;padding:6px 0;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.tab{
+  white-space:nowrap;padding:10px 16px;border-radius:12px;background:var(--panel);border:1px solid rgba(255,255,255,.08);
+  color:var(--dim);font-weight:700;cursor:pointer;transition:.25s;font-size:14px;
+}
+.tab:hover{color:var(--txt);transform:translateY(-2px);border-color:var(--neon);box-shadow:0 0 16px rgba(168,85,247,.3)}
+.tab.on{color:#fff;background:linear-gradient(135deg,rgba(168,85,247,.35),rgba(57,255,136,.2));border-color:var(--neon);box-shadow:0 0 18px rgba(168,85,247,.45)}
+
+/* ===== BUTTONS ===== */
+.btn{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;overflow:hidden;
+  padding:13px 24px;border-radius:14px;border:1px solid rgba(255,255,255,.12);cursor:pointer;
+  font-family:'Rubik';font-weight:700;font-size:15px;color:var(--txt);background:var(--panel2);
+  transition:transform .15s,box-shadow .25s,border-color .25s;
+}
+.btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.btn:active{transform:translateY(1px) scale(.97)}
+.btn::before{ /* shimmer */
+  content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:skewX(-20deg);transition:left .55s;
+}
+.btn:hover::before{left:130%}
+.btn-green{background:linear-gradient(135deg,#22c55e,#16a34a);border-color:#4ade80;color:#fff}
+.btn-green:hover{box-shadow:0 0 26px rgba(57,255,136,.5);border-color:var(--acid)}
+.btn-neon{background:linear-gradient(135deg,rgba(168,85,247,.9),rgba(124,58,237,.9));border-color:#c084fc;color:#fff}
+.btn-neon:hover{box-shadow:0 0 26px rgba(168,85,247,.6)}
+.btn-red{background:linear-gradient(135deg,#ef4444,#b91c1c);border-color:#f87171;color:#fff}
+.btn-red:hover{box-shadow:0 0 24px rgba(239,68,68,.5)}
+.btn-gold{background:linear-gradient(135deg,#ffd166,#d97706);color:#2a1a00;border-color:#fde68a}
+.btn-gold:hover{box-shadow:0 0 26px rgba(255,209,102,.6)}
+.btn-tg{background:var(--tg);border-color:#7cd4f8;color:#fff}
+.btn-tg:hover{box-shadow:0 0 26px rgba(42,171,238,.6)}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn.pulse{animation:pulseGlow 2s infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 8px rgba(57,255,136,.3)}50%{box-shadow:0 0 26px rgba(57,255,136,.75)}}
+.btn.liquid{background-size:220% 220%;animation:liquid 3s ease infinite}
+@keyframes liquid{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);transform:scale(0);animation:rip .55s ease-out;pointer-events:none}
+@keyframes rip{to{transform:scale(3.2);opacity:0}}
+
+/* ===== CARDS / PANELS ===== */
+.glass{background:var(--panel);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);backdrop-filter:blur(10px);padding:18px}
+.gcard{
+  background:var(--panel);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);padding:18px;cursor:pointer;
+  transition:.25s;position:relative;overflow:hidden;
+}
+.gcard:hover{transform:translateY(-6px);border-color:var(--neon);box-shadow:0 12px 34px rgba(168,85,247,.28)}
+.gcard::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.06) 50%,transparent 70%);transform:translateX(-100%);transition:transform .7s}
+.gcard:hover::after{transform:translateX(100%)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.banner{height:120px;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-size:52px;
+  background:linear-gradient(135deg,rgba(168,85,247,.3),rgba(57,255,136,.2));border:1px solid rgba(255,255,255,.1)}
+.sec-title{margin:26px 0 14px;font-size:20px;display:flex;align-items:center;gap:10px}
+.sec-title::before{content:'';width:5px;height:22px;border-radius:3px;background:linear-gradient(180deg,var(--acid),var(--neon))}
+.dim{color:var(--dim);font-size:14px}
+.mono{font-variant-numeric:tabular-nums}
+input,select,textarea{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(10,10,20,.7);
+  color:var(--txt);font-family:'Rubik';font-size:15px;outline:none;transition:.2s;
+}
+input:focus,select:focus{border-color:var(--acid);box-shadow:0 0 14px rgba(57,255,136,.25)}
+label{display:block;font-size:13px;color:var(--dim);margin:12px 0 6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hr{height:1px;background:rgba(255,255,255,.08);margin:14px 0}
+
+/* ===== MODALS / TOASTS ===== */
+#modalRoot{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(5,5,12,.8);backdrop-filter:blur(6px);padding:16px}
+#modalRoot.show{display:flex}
+.modal{background:#151527;border:1px solid rgba(168,85,247,.4);border-radius:20px;max-width:560px;width:100%;max-height:86vh;overflow-y:auto;padding:24px;animation:pop .3s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.modal h3{margin-bottom:12px;font-size:19px}
+#toasts{position:fixed;top:16px;right:16px;z-index:80;display:flex;flex-direction:column;gap:8px;max-width:92vw}
+.toast{background:#16162b;border:1px solid var(--acid);border-radius:12px;padding:12px 18px;font-weight:500;animation:tin .35s;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.toast.err{border-color:var(--red)}
+@keyframes tin{from{transform:translateX(120%);opacity:0}}
+.toast.out{animation:tout .3s forwards}
+@keyframes tout{to{transform:translateX(120%);opacity:0}}
+
+/* ===== TICKER & FLOATERS ===== */
+#ticker{position:fixed;bottom:0;left:0;right:0;z-index:40;background:rgba(10,10,18,.85);border-top:1px solid rgba(168,85,247,.35);padding:7px 0;overflow:hidden;white-space:nowrap}
+#tickerIn{display:inline-block;animation:tick 30s linear infinite;color:var(--dim);font-size:13px}
+#tickerIn b{color:var(--acid)}
+@keyframes tick{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+.floatTg{position:fixed;right:16px;bottom:52px;z-index:50;width:54px;height:54px;border-radius:50%;background:var(--tg);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 6px 22px rgba(42,171,238,.5);transition:.2s;border:none}
+.floatTg:hover{transform:scale(1.12) rotate(-6deg)}
+.floatChat{position:fixed;right:16px;bottom:116px;z-index:50;width:54px;height:54px;border-radius:50%;background:var(--neon);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 6px 22px rgba(168,85,247,.5);transition:.2s;border:none}
+.floatChat:hover{transform:scale(1.12)}
+#confetti{position:fixed;inset:0;z-index:90;pointer-events:none}
+.particles{position:absolute;border-radius:50%;pointer-events:none}
+
+/* ===== KASES ===== */
+.roul-wrap{position:relative;height:130px;overflow:hidden;border-radius:14px;background:rgba(8,8,16,.9);border:1px solid rgba(255,255,255,.1);margin:14px 0}
+.roul{display:flex;gap:8px;position:absolute;top:10px;left:0;will-change:transform}
+.rItem{min-width:110px;height:110px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;text-align:center;padding:6px;flex-shrink:0}
+.rItem .em{font-size:34px}
+.roul-arrow{position:absolute;left:50%;top:0;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid var(--gold);z-index:5;filter:drop-shadow(0 0 6px var(--gold))}
+.roul-center{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--gold);transform:translateX(-50%);z-index:4;box-shadow:0 0 10px var(--gold)}
+.r-c{background:linear-gradient(135deg,#3b4a6b,#2b3550);border-color:#6b7fa8}
+.r-r{background:linear-gradient(135deg,#3d6ea5,#2a4d7a);border-color:#66a3e0}
+.r-e{background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#a78bfa}
+.r-l{background:linear-gradient(135deg,#d97706,#92400e);border-color:#fbbf24;box-shadow:0 0 18px rgba(251,191,36,.5)}
+.r-m{background:linear-gradient(135deg,#dc2626,#7f1d1d);border-color:#f87171;box-shadow:0 0 22px rgba(248,113,113,.6)}
+.won{animation:wonP .5s ease 3}
+@keyframes wonP{50%{transform:scale(1.12);filter:brightness(1.6)}}
+.chance-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0}
+.chance-bar div{height:100%}
+.multib{display:flex;gap:8px;margin-top:10px}
+.multib .btn{flex:1}
+
+/* ===== CASINO ===== */
+.reel{height:92px;overflow:hidden;background:rgba(8,8,16,.9);border:1px solid rgba(255,255,255,.12);border-radius:14px;position:relative;flex:1}
+.reel::before,.reel::after{content:'';position:absolute;left:0;right:0;height:22px;z-index:3;pointer-events:none}
+.reel::before{top:0;background:linear-gradient(#0a0a12,transparent)}
+.reel::after{bottom:0;background:linear-gradient(transparent,#0a0a12)}
+.reelIn{display:flex;flex-direction:column;position:absolute;width:100%}
+.reelIn span{height:92px;display:flex;align-items:center;justify-content:center;font-size:44px;flex-shrink:0}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(6deg)}}
+.dice{width:64px;height:64px;border-radius:14px;background:#fff;color:#111;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;transition:.2s}
+.dice.shake{animation:shake .5s}
+#crashCanvas,#wheelCanvas{width:100%;border-radius:14px;background:rgba(8,8,16,.7);border:1px solid rgba(255,255,255,.1)}
+.mine-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px}
+.mcell{aspect-ratio:1;border-radius:10px;background:var(--panel2);border:1px solid rgba(255,255,255,.12);font-size:22px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;perspective:400px}
+.mcell:hover{border-color:var(--acid);transform:scale(1.06)}
+.mcell.open{transform:rotateY(180deg);cursor:default}
+.mcell .inner{transition:.3s;backface-visibility:hidden}
+.mcell.boom{background:rgba(239,68,68,.3);border-color:var(--red);animation:wonP .4s}
+
+/* ===== MISC ===== */
+.bar{height:10px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar>div{height:100%;background:linear-gradient(90deg,var(--acid),var(--neon));transition:width .4s;border-radius:5px}
+.avatar{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(135deg,var(--neon),var(--acid));border:3px solid rgba(255,255,255,.2)}
+.log{max-height:220px;overflow-y:auto;font-size:13px;line-height:1.7;background:rgba(8,8,16,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,.08)}
+.log b{color:var(--acid)}
+.log .bad{color:var(--red)}
+.statline{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.07);font-size:14px}
+.runwrap{position:relative}
+canvas#run{width:100%;border-radius:14px;background:linear-gradient(#1a1a2e,#0d0d1a);display:block;border:1px solid rgba(255,255,255,.1);touch-action:none}
+.chatbox{height:340px;overflow-y:auto;background:rgba(8,8,16,.7);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;border:1px solid rgba(255,255,255,.08)}
+.msg{max-width:78%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;animation:pop .25s}
+.msg.me{align-self:flex-end;background:linear-gradient(135deg,#7c3aed,#a855f7);border-bottom-right-radius:4px}
+.msg.mgr{align-self:flex-start;background:rgba(40,40,64,.9);border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:4px}
+.msg .tglink{display:inline-block;margin-top:6px}
+.typing{align-self:flex-start;color:var(--dim);font-size:12px;font-style:italic}
+.devsign{
+  padding:40px 20px;text-align:center;border-radius:18px;border:2px dashed rgba(168,85,247,.5);
+  background:repeating-linear-gradient(45deg,rgba(168,85,247,.06) 0 12px,transparent 12px 24px);
+}
+.devsign .big{font-family:'Unbounded';font-size:clamp(22px,5vw,34px);font-weight:900;
+  background:linear-gradient(90deg,var(--neon),var(--acid),var(--neon));background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:liquid 3s infinite}
+.devsign .cog{font-size:44px;display:inline-block;animation:spin 4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer{margin-top:40px;padding:22px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+footer .lnk{color:var(--dim);font-size:13px;cursor:pointer;text-decoration:underline dotted;transition:.2s}
+footer .lnk:hover{color:var(--acid)}
+.badge18{background:var(--red);color:#fff;font-weight:900;border-radius:6px;padding:2px 8px;font-size:12px}
+@media(max-width:640px){
+  .wallet{width:100%;justify-content:center}
+  #toasts{left:12px;right:12px}
+  .toast{font-size:13px}
+}
+</style>
+</head>
+
+<body>
+<canvas id="particles"></canvas>
+<canvas id="confetti"></canvas>
+<div id="toasts"></div>
+
+<div id="app">
+<header>
+  <div id="logo" onclick="location.reload()" title="Клик = перезагрузка">DROPOUT</div>
+  <div class="wallet">
+    <div class="wchip" id="wGreen" onclick="openTopup('green')">🟢 <span id="cGreen">0</span> <span class="lbl" id="lGreen">зелени</span></div>
+    <div class="wchip" id="wGold">🟡 <span id="cGold">0</span> <span class="lbl" id="lGold">рубля</span></div>
+    <div class="wchip" id="wBonus">🎁 <span id="cBonus">0</span> <span class="lbl" id="lBonus">бонусов</span></div>
+    <button class="btn btn-gold btn-sm" id="topupBtn" onclick="openTopup('gold')">Пополнить</button>
+  </div>
+</header>
+
+<nav id="tabs"></nav>
+
+<!-- ===== WORLD ===== -->
+<section id="scr-world">
+  <div class="glass" style="margin-top:10px">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <div class="hfont" style="font-size:18px;margin-bottom:4px">Добро пожаловать в подпольный город 👋</div>
+        <div class="dim">Ты выпал из системы. Здесь платят за реакции, мозги и удачу. Крути фарму, открывай мем-кейсы, гоняй казино на бонусках.</div>
+      </div>
+      <button class="btn btn-tg" onclick="openTG()">✈️ Наш Telegram</button>
+    </div>
+    <div class="hr"></div>
+    <div class="row">
+      <button class="btn btn-sm pulse" id="dailyBtn" onclick="claimDaily()">🎁 Ежедневный бонус</button>
+      <button class="btn btn-sm btn-neon" id="wheelBtn" onclick="openWheel()">🎡 Колесо фортуны</button>
+      <button class="btn btn-sm" onclick="showAd()">📺 Реклама за бонуски</button>
+    </div>
+    <div id="dailyInfo" class="dim" style="margin-top:8px"></div>
+  </div>
+
+  <div class="sec-title">Хаб</div>
+  <div class="grid g2" id="worldGrid"></div>
+
+  <div class="sec-title">Магазин призов — за бонуски</div>
+  <div class="grid g3" id="shopGrid"></div>
+</section>
+
+<!-- ===== FARM ===== -->
+<section id="scr-farm" style="display:none">
+  <div class="glass" style="margin-top:10px;text-align:center">
+    <div class="dim" style="font-size:15px">Жми на баржу — капает <b style="color:var(--acid)">0.1 зелени</b> за тап. Прокачивай пальцы и пассивку.</div>
+    <div class="hfont mono" id="farmTap" style="font-size:34px;color:var(--acid);margin:10px 0">0.1 зелени/тап</div>
+    <button class="btn btn-green btn-lg" id="tapBtn" onclick="farmTap(event)" style="font-size:22px;padding:22px 60px;border-radius:50%;width:170px;height:170px;justify-content:center">💰<br>ТАПАЙ</button>
+    <div class="dim mono" style="margin-top:10px">Пассивка: <b id="farmPassive">0</b> зелени/сек</div>
+  </div>
+  <div class="sec-title">Апгрейды</div>
+  <div class="grid g2" id="farmUpg"></div>
+</section>
+
+<!-- ===== CASES ===== -->
+<section id="scr-cases" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px;margin-bottom:6px">Мем-кейсы из TikTok</div>
+    <div class="dim">Крути ленту, ловите мем. Чем старше и легендарнее мем — тем дороже. Лента с плавным торможением, честные шансы показаны ниже.</div>
+    <div class="roul-wrap" id="roulWrap">
+      <div class="roul" id="roul"></div>
+      <div class="roul-center"></div><div class="roul-arrow"></div>
+    </div>
+    <div id="roulResult" style="margin:10px 0"></div>
+    <div class="row">
+      <select id="casePick" style="width:auto;flex:1;min-width:200px"></select>
+    </div>
+    <div id="caseChances" class="dim" style="margin:10px 0"></div>
+    <div class="multib">
+      <button class="btn btn-green" onclick="openCase(1)">Крутить ×1</button>
+      <button class="btn btn-neon" onclick="openCase(2)">×2</button>
+      <button class="btn btn-neon liquid" onclick="openCase(3)">×3</button>
+      <button class="btn btn-gold liquid" onclick="openCase(5)">×5 🔥</button>
+    </div>
+  </div>
+  <div class="sec-title">Склад мемов</div>
+  <div class="glass" id="invBox"></div>
+</section>
+
+<!-- ===== CASINO ===== -->
+<section id="scr-casino" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="row" style="justify-content:space-between">
+      <div class="hfont" style="font-size:18px">Подпольное казино <span class="badge18">18+</span></div>
+      <div class="row">
+        <span class="dim">Ставка:</span>
+        <select id="casCur" style="width:auto">
+          <option value="bonus">🎁 бонусы</option>
+          <option value="green">🟢 зелень</option>
+        </select>
+        <input type="number" id="casBet" value="5" min="1" style="width:110px">
+      </div>
+    </div>
+    <div class="dim" style="margin-top:6px">По умолчанию крутим на бонусках — реальная валюта не сгорает. Это развлечение на виртуальные валюты, не азартная игра на деньги.</div>
+  </div>
+  <div class="sec-title">Слоты</div>
+  <div class="glass">
+    <div class="row" style="gap:10px">
+      <div class="reel"><div class="reelIn" id="reel1"></div></div>
+      <div class="reel"><div class="reelIn" id="reel2"></div></div>
+      <div class="reel"><div class="reelIn" id="reel3"></div></div>
+    </div>
+    <div class="row" style="margin-top:12px;justify-content:center">
+      <button class="btn btn-neon liquid" id="slotBtn" onclick="spinSlots()">🎰 Крутить</button>
+    </div>
+    <div class="dim" style="margin-top:8px;text-align:center">333 = ×25 · 777 = ×50 · три одинаковых = ×10 · два = ×2</div>
+    <div id="slotRes" class="hfont" style="text-align:center;margin-top:8px;font-size:18px;min-height:24px"></div>
+  </div>
+  <div class="sec-title">Краш</div>
+  <div class="glass">
+    <canvas id="crashCanvas" width="640" height="240"></canvas>
+    <div class="row" style="margin-top:10px">
+      <div class="hfont mono" id="crashMult" style="font-size:30px;color:var(--acid);flex:1">×1.00</div>
+      <button class="btn btn-green" id="crashBetBtn" onclick="crashBet()">🚀 Ставка</button>
+      <button class="btn btn-gold" id="crashOutBtn" onclick="crashOut()" disabled>Забрать</button>
+    </div>
+    <div class="dim" id="crashLog" style="margin-top:6px">История: —</div>
+  </div>
+  <div class="sec-title">Колесо фортуны</div>
+  <div class="glass" style="text-align:center">
+    <canvas id="wheelCanvas" width="420" height="420" style="max-width:340px"></canvas>
+    <div class="row" style="justify-content:center;margin-top:10px">
+      <button class="btn btn-neon" id="wheelSpinBtn" onclick="spinWheel()">Крутить (1 бонус)</button>
+    </div>
+    <div class="dim">Бесплатное ежедневное — в мире. Здесь — за 1 бонуску. Множители: ×0, ×0.5, ×1, ×1.5, ×2, ×3, ×5, ДЖЕКПОТ ×10</div>
+    <div id="wheelRes" class="hfont" style="font-size:20px;margin-top:8px;min-height:24px"></div>
+  </div>
+  <div class="sec-title">Мины</div>
+  <div class="glass">
+    <div class="row">
+      <span class="dim">Мин:</span>
+      <select id="mineCnt" style="width:auto"><option value="3">3</option><option value="5" selected>5</option><option value="10">10</option></select>
+      <span class="dim mono">Множитель: <b id="mineMult" style="color:var(--acid)">1.00</b></span>
+      <button class="btn btn-green btn-sm" id="mineCashBtn" onclick="mineCash()" disabled>Кэшаут</button>
+    </div>
+    <div class="mine-grid" id="mineGrid" style="margin-top:12px"></div>
+    <div id="mineRes" class="dim" style="margin-top:10px">Открывай клетки, забирай до взрыва.</div>
+  </div>
+  <div class="sec-title">Кости</div>
+  <div class="glass">
+    <div class="row" style="justify-content:center;gap:20px">
+      <div class="dice" id="d1">🎲</div><div class="dice" id="d2">🎲</div>
+    </div>
+    <div class="row" style="justify-content:center;margin-top:14px;gap:8px">
+      <button class="btn btn-neon" onclick="rollDice('low')">Меньше 7 (×2.1)</button>
+      <button class="btn btn-neon" onclick="rollDice('seven')">Ровно 7 (×4.8)</button>
+      <button class="btn btn-neon" onclick="rollDice('high')">Больше 7 (×2.1)</button>
+    </div>
+    <div id="diceRes" class="hfont" style="text-align:center;margin-top:10px;font-size:18px;min-height:24px"></div>
+  </div>
+</section>
+
+<!-- ===== EXCHANGE ===== -->
+<section id="scr-exchange" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px;margin-bottom:6px">🔁 Обмен валюты</div>
+    <div class="dim">Донатишь рубли (🟡) — меняешь их на зелень (🟢). Курс фиксированный: <b style="color:var(--gold)">1 рубль = 2 зелени</b>. Комиссии нет.</div>
+    <div class="hr"></div>
+    <label>Сколько рублей обменять</label>
+    <input type="number" id="exchIn" value="10" min="1" oninput="exchCalc()">
+    <div class="hfont mono" style="font-size:26px;margin:12px 0;color:var(--acid)">Получишь: <span id="exchOut">20</span> зелени</div>
+    <button class="btn btn-green liquid" onclick="doExchange()">Обменять</button>
+    <div class="dim" style="margin-top:8px">Не хватает рублей? <a href="#" onclick="openTopup('gold');return false" style="color:var(--gold)">Пополнить →</a></div>
+    <div id="exchCoins" style="position:relative;height:0"></div>
+  </div>
+  <div class="sec-title">История обменов</div>
+  <div class="glass" id="exchHist">Пока пусто.</div>
+</section>
+
+<!-- ===== AUCTION ===== -->
+<section id="scr-auction" style="display:none">
+  <div class="devsign" style="margin-top:10px">
+    <span class="cog">⚙️</span>
+    <div class="big">В РАЗРАБОТКЕ!</div>
+    <div class="dim" style="margin-top:10px">Чёрный аукцион города уже скоро. Боты готовят заначки.</div>
+  </div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="scr-quiz" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px;margin-bottom:6px">🧠 Мем-квиз</div>
+    <div class="dim">Выбери катку. Награда — только если все ответы верные с первого раза (страховку можно купить за рубли: одна ошибка не ломает забег).</div>
+    <div class="grid g3" style="margin-top:14px">
+      <div class="gcard" onclick="startQuiz(10)"><div style="font-size:34px">🥉</div><div class="hfont" style="margin:6px 0">10 вопросов</div><div class="dim">Награда за все верные:</div><div class="hfont" style="color:var(--acid);font-size:20px">50 зелени</div></div>
+      <div class="gcard" onclick="startQuiz(20)"><div style="font-size:34px">🥈</div><div class="hfont" style="margin:6px 0">20 вопросов</div><div class="dim">Награда за все верные:</div><div class="hfont" style="color:var(--acid);font-size:20px">199 зелени</div></div>
+      <div class="gcard" onclick="startQuiz(50)"><div style="font-size:34px">🥇</div><div class="hfont" style="margin:6px 0">50 вопросов</div><div class="dim">Награда за все верные:</div><div class="hfont" style="color:var(--acid);font-size:20px">999 зелени</div></div>
+    </div>
+  </div>
+  <div class="glass" id="quizPlay" style="display:none;margin-top:14px"></div>
+</section>
+
+<!-- ===== QUEST ===== -->
+<section id="scr-quest" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px">📜 История выпавшего</div>
+    <div class="dim">Ветвящийся сюжет мира DROPOUT. Твои решения меняют репутацию и финал.</div>
+    <div class="hr"></div>
+    <div id="questBox"></div>
+  </div>
+</section>
+
+<!-- ===== CHAT ===== -->
+<section id="scr-chat" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="hfont" style="font-size:18px">💬 Чат с менеджером</div>
+      <button class="btn btn-tg btn-sm" onclick="openTG()">✈️ Написать менеджеру напрямую</button>
+    </div>
+    <div class="chatbox" id="chatBox"></div>
+    <div class="row" id="chatQuick" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:10px">
+      <input id="chatInput" placeholder="Напиши менеджеру…" onkeydown="if(event.key==='Enter')chatSend()">
+      <button class="btn btn-neon" onclick="chatSend()">Отправить</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROFILE ===== -->
+<section id="scr-profile" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="row">
+      <div class="avatar" id="profAv">😎</div>
+      <div style="flex:1">
+        <div class="hfont" style="font-size:20px">Гость города <span class="dim" id="profTitle"></span></div>
+        <div class="dim mono" id="profLvl"></div>
+        <div class="bar" style="margin-top:6px"><div id="xpBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="hr"></div>
+    <label>Сменить никнейм</label>
+    <div class="row"><input id="nickInput" placeholder="Твой ник"><button class="btn btn-sm btn-neon" onclick="saveNick()">Сохранить</button></div>
+    <div class="hr"></div>
+    <div class="hfont" style="margin-bottom:8px">🎟 Промокод</div>
+    <div class="row">
+      <input id="promoInput" placeholder="Введи промокод" style="flex:1">
+      <button class="btn btn-green btn-sm" onclick="usePromo()">Активировать</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="dim">Промокоды публикуются в Telegram:</span>
+      <button class="btn btn-tg btn-sm" onclick="openTG()">✈️ @dropoutmanager</button>
+    </div>
+    <div class="hr"></div>
+    <div class="hfont" style="margin-bottom:8px">🛡 Сообщество и поддержка</div>
+    <div class="row">
+      <button class="btn btn-tg btn-sm" onclick="openTG()">✈️ Telegram-канал</button>
+      <button class="btn btn-sm" onclick="goChat()">💬 Чат с менеджером</button>
+      <button class="btn btn-red btn-sm" onclick="wipeData()">🗑 Удалить мои данные</button>
+    </div>
+  </div>
+  <div class="sec-title">Статистика</div>
+  <div class="glass" id="statsBox"></div>
+  <div class="sec-title">Достижения</div>
+  <div class="glass" id="achBox"></div>
+</section>
+
+<!-- ===== ADMIN ===== -->
+<section id="scr-admin" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px">🛠 Админ-панель</div>
+    <label>Пароль</label>
+    <div class="row"><input type="password" id="admPass"><button class="btn btn-neon btn-sm" onclick="admLogin()">Войти</button></div>
+    <div id="admPanel" style="display:none;margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- ===== INFO ===== -->
+<section id="scr-info" style="display:none">
+  <div class="glass" style="margin-top:10px">
+    <div class="hfont" style="font-size:18px">ℹ️ Как работает экономика</div>
+    <div class="dim" style="line-height:1.8;margin-top:8px">
+      <p><b style="color:var(--acid)">🟢 Зелень</b> — основная валюта. Фармишь тапами, выигрываешь в квизе, получаешь с левелапов и ежедневок. Тратишь на апгрейды, кейсы и ставки.</p>
+      <p style="margin-top:8px"><b style="color:var(--gold)">🟡 Рубли</b> — премиум-валюта. Покупаешь за реальные деньги 1:1 (демо: пополнение — заглушка; в продакшене подключается платёжный виджет). Меняешь на зелень в обменнике 1:2, тратишь на страховки и пропуски.</p>
+      <p style="margin-top:8px"><b>🎁 Бонуски</b> — за активность: игры, ежедневки, левелапы, просмотр «рекламы». Не покупаются напрямую. На них крутится казино и покупаются призы из шопа.</p>
+      <p style="margin-top:8px"><b>Шоп</b>: бонусы → призы. Заявка оформляется в Telegram-канале — менеджер подтверждает списание.</p>
+      <p style="margin-top:8px">Все валюты виртуальные, вывести деньгами нельзя. Игровые механики — развлечение, не заработок.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="hfont" style="font-size:14px;color:var(--dim)">DROPOUT © 2026</span>
+  <span class="badge18">18+</span>
+  <span class="lnk" onclick="openLegal('privacy')">Конфиденциальность</span>
+  <span class="lnk" onclick="openLegal('terms')">Соглашение</span>
+  <span class="lnk" onclick="openLegal('disclaimer')">Дисклеймер</span>
+  <span class="lnk" onclick="openLegal('shop')">Правила шопа</span>
+  <span class="lnk" onclick="go('info')">Инфо</span>
+</footer>
+</div>
+
+<button class="floatTg" onclick="openTG()" title="Наш Telegram">✈️</button>
+<button class="floatChat" onclick="go('chat')" title="Чат с менеджером">💬</button>
+<div id="ticker"><div id="tickerIn"></div></div>
+<div id="modalRoot"><div class="modal" id="modalBox"></div></div>
+
+<script>
+/* ============ CORE ============ */
+const TG_LINK = 'https://t.me/dropoutmanager';
+const SAVE_KEY = 'dropout_save_v3';
+
+const S = {
+  green: 100, gold: 0, bonus: 20,
+  xp: 0, lvl: 1, nick: 'Гость города',
+  vip: 0, boostUntil: 0, insurance: 0,
+  taps: 0, farmUp: {}, farmLast: Date.now(),
+  inv: [], exchHist: [], quizBest: {}, quizDone: 0, quizInsurance: 0,
+  questNode: 'start', questRep: 0, questDoneFinales: [],
+  bought: [], ach: [], stats: {},
+  lastDaily: 0, streak: 0, lastWheel: 0, wheelUsed: 0,
+  promo: [], seenAd: 0, chat: [], theme: 0, title: 'Выпавший'
+};
+function save(){ try{localStorage.setItem(SAVE_KEY, JSON.stringify(S));}catch(e){} }
+function load(){ try{ const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if(d) Object.assign(S, d); }catch(e){} }
+
+/* money formatting with plural labels */
+function plz(n, one, few, many){
+  n = Math.abs(n); const m10 = n%10, m100 = n%100;
+  if(m10===1 && m100!==11) return one;
+  if(m10>=2 && m10<=4 && (m100<10||m100>=20)) return few;
+  return many;
+}
+function gLabel(n){ return plz(n,'зелень','зелени','зелени'); }
+function rLabel(n){ return plz(n,'рубль','рубля','рублей'); }
+function bLabel(n){ return plz(n,'бонус','бонуса','бонусов'); }
+function fmt(n){ return (Math.round(n*100)/100).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+
+function renderWallet(){
+  const set=(id,lid,val,lbl)=>{
+    const el=document.getElementById(id);
+    if(el.textContent !== fmt(val)) el.textContent = fmt(val);
+    document.getElementById(lid).textContent = lbl;
+  };
+  set('cGreen','lGreen',S.green,gLabel(S.green));
+  set('cGold','lGold',S.gold,rLabel(S.gold));
+  set('cBonus','lBonus',S.bonus,bLabel(S.bonus));
+}
+function addCur(cur, amt, silent){
+  if(amt<=0) return;
+  if(cur==='green') S.green+=amt; else if(cur==='gold') S.gold+=amt; else S.bonus+=amt;
+  if(!silent){
+    const chip = cur==='green'?document.getElementById('wGreen'):cur==='gold'?document.getElementById('wGold'):document.getElementById('wBonus');
+    chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump');
+  }
+  renderWallet(); save();
+}
+function pay(cur, amt){
+  const bal = cur==='green'?S.green:cur==='gold'?S.gold:S.bonus;
+  if(bal < amt){ toast(cur==='green'?'Не хватает зелени 🟢':cur==='gold'?'Не хватает рублей 🟡':'Не хватает бонусок 🎁', true); return false; }
+  if(cur==='green') S.green-=amt; else if(cur==='gold') S.gold-=amt; else S.bonus-=amt;
+  renderWallet(); save(); return true;
+}
+function boostMult(){ return Date.now()<S.boostUntil ? 2 : 1; }
+function vipOn(){ return Date.now()<S.vip; }
+
+/* XP / levels */
+function xpNeed(l){ return 60*Math.pow(1.4,l-1); }
+function addXP(n){
+  S.xp += n;
+  while(S.xp >= xpNeed(S.lvl)){
+    S.xp -= xpNeed(S.lvl); S.lvl++;
+    const g = 30+S.lvl*20, b = 3+Math.floor(S.lvl/3);
+    addCur('green',g,true); addCur('bonus',b,true);
+    toast(`⬆️ Уровень ${S.lvl}! +${g} зелени, +${b} бонусов`);
+    confetti(30);
+  }
+  const p = document.getElementById('xpBar'); if(p) p.style.width = Math.min(100, S.xp/xpNeed(S.lvl)*100)+'%';
+}
+
+/* toasts */
+function toast(msg, err){
+  const t = document.createElement('div');
+  t.className = 'toast'+(err?' err':''); t.innerHTML = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),320); }, 2600);
+}
+
+/* modal */
+function modal(html){
+  const m = document.getElementById('modalBox'); m.innerHTML = html;
+  const r = document.getElementById('modalRoot'); r.classList.add('show');
+}
+function closeModal(){ document.getElementById('modalRoot').classList.remove('show'); }
+document.getElementById('modalRoot').addEventListener('click', e=>{ if(e.target.id==='modalRoot') closeModal(); });
+
+/* sound */
+let AC=null, soundOn=true;
+function snd(freq, dur, type='sine', vol=0.08){
+  if(!soundOn) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(AC.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+dur);
+    o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+
+/* confetti */
+function confetti(n){
+  const c = document.getElementById('confetti'); const W = innerWidth;
+  for(let i=0;i<n;i++){
+    const p = document.createElement('div'); const s = 5+Math.random()*8;
+    p.style.cssText = `position:absolute;width:${s}px;height:${s}px;background:${['#a855f7','#39ff88','#ffd166','#ff3b6b','#4dc3ff'][i%5]};left:${Math.random()*W}px;top:-10px;border-radius:${Math.random()>.5?'50%':'2px'};transition:transform 2.4s cubic-bezier(.2,.6,.4,1),opacity 2.4s`;
+    c.appendChild(p);
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ p.style.transform=`translateY(${innerHeight+40}px) rotate(${Math.random()*720}deg)`; p.style.opacity='0'; }); });
+    setTimeout(()=>p.remove(), 2600);
+  }
+}
+
+/* ticker */
+const tickerMsgs = [
+  '🔥 Новые промокоды в нашем Telegram → <b>t.me/dropoutmanager</b>',
+  '💀 Ходят слухи: легендарный «Скамбиди» падает с шансом 0.2%',
+  '🎰 Казино крутится на бонусках — реальная валюта не сгорает',
+  '🔁 Обменник: 1 рубль = 2 зелени, без комиссии',
+  '🎁 За просмотр рекламы дают бонуски — легальный фарм',
+  '🛠 Чёрный аукцион: В РАЗРАБОТКЕ!',
+];
+function buildTicker(){
+  let html = tickerMsgs.join(' &nbsp;•&nbsp; ') + ' &nbsp;•&nbsp; ';
+  document.getElementById('tickerIn').innerHTML = html+html;
+}
+
+/* particles */
+const pcv = document.getElementById('particles'), pctx = pcv.getContext('2d');
+let particles = [];
+function initParticles(){
+  pcv.width = innerWidth; pcv.height = innerHeight;
+  particles = Array.from({length:40},()=>({
+    x:Math.random()*pcv.width, y:Math.random()*pcv.height,
+    r:1+Math.random()*2.4, vx:(Math.random()-.5)*.3, vy:-.15-Math.random()*.3,
+    c:['rgba(168,85,247,','rgba(57,255,136,','rgba(255,209,102,'][Math.floor(Math.random()*3)]
+  }));
+}
+function tickParticles(){
+  pctx.clearRect(0,0,pcv.width,pcv.height);
+  for(const p of particles){
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.y<-10) { p.y=pcv.height+10; p.x=Math.random()*pcv.width; }
+    if(p.x<-10) p.x=pcv.width+10; if(p.x>pcv.width+10) p.x=-10;
+    pctx.fillStyle=p.c+'0.5)'; pctx.beginPath(); pctx.arc(p.x,p.y,p.r,0,7); pctx.fill();
+  }
+  requestAnimationFrame(tickParticles);
+}
+addEventListener('resize', ()=>{ initParticles(); });
+
+/* ===== NAV ===== */
+const TABS = [
+  ['world','🌆 Мир'],['farm','💰 Фарм'],['cases','📦 Кейсы'],['casino','🎰 Казино'],
+  ['exchange','🔁 Обмен'],['auction','🔨 Аукцион'],['quiz','🧠 Квиз'],['quest','📜 Квест'],
+  ['chat','💬 Чат'],['profile','👤 Профиль'],['admin','🛠 Админка'],['info','ℹ️ Инфо']
+];
+let curTab = 'world';
+function buildTabs(){
+  document.getElementById('tabs').innerHTML = TABS.map(([id,n])=>`<div class="tab${id===curTab?' on':''}" onclick="go('${id}')">${n}</div>`).join('');
+}
+function go(id){
+  curTab = id;
+  for(const [tid] of TABS){
+    const el = document.getElementById('scr-'+tid);
+    if(el) el.style.display = tid===id ? '' : 'none';
+  }
+  buildTabs(); renderWallet(); window.scrollTo(0,0); save();
+  if(id==='world') renderWorld();
+  if(id==='farm') renderFarm();
+  if(id==='cases') renderCases();
+  if(id==='casino') renderCasino();
+  if(id==='profile') renderProfile();
+  if(id==='admin') renderAdmin();
+}
+
+/* ===== TOPUP (1:1) ===== */
+function openTopup(mode){
+  if(mode==='green'){ modal(`<h3>🟢 Зелень не продаётся</h3><p class="dim">Зелень фармят честно: тапы, квиз, обменник. Купи рубли — и меняй их на зелень в обменнике (1 рубль = 2 зелени).</p><div class="row" style="margin-top:14px"><button class="btn btn-gold" onclick="closeModal();openTopup('gold')">Купить рубли</button><button class="btn" onclick="closeModal()">Закрыть</button></div>`); return; }
+  modal(`
+    <h3>🟡 Пополнить рубли — курс 1:1</h3>
+    <p class="dim">1 рубль реальный = 1 рубль на баланс. Купить можно только рубли.</p>
+    <label>Сумма пополнения (рубли)</label>
+    <input type="number" id="topSum" value="100" min="1" oninput="document.getElementById('topPreview').textContent=(parseInt(this.value)||0)+' руб. на баланс'">
+    <label>Способ оплаты</label>
+    <select id="topMethod">
+      <option value="card">💳 Картой</option>
+      <option value="sbp">🏦 СБП</option>
+      <option value="sb">🟢 СберPay</option>
+    </select>
+    <div class="dim mono" style="margin:10px 0" id="topPreview">100 руб. на баланс</div>
+    <p class="dim" style="font-size:12px">⚠️ Демо-режим: в продакшене здесь подключается платёжный виджет (YooKassa и т.п.), а списание подтверждается сервером.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-gold liquid" onclick="doTopup()">Оплатить</button>
+      <button class="btn" onclick="closeModal()">Отмена</button>
+    </div>`);
+}
+function doTopup(){
+  const sum = parseInt(document.getElementById('topSum').value)||0;
+  if(sum<1){ toast('Сумма от 1 рубля', true); return; }
+  closeModal();
+  modal(`<h3 style="text-align:center">🔒 Защищённая оплата</h3>
+    <div style="text-align:center;padding:20px 0">
+      <div style="font-size:52px;animation:spin 1.4s linear infinite;display:inline-block">⏳</div>
+      <p class="dim" style="margin-top:10px">Обработка платежа (${sum} руб.)…<br>Не закрывай окно.</p>
+    </div>`);
+  setTimeout(()=>{
+    modal(`<h3 style="text-align:center;color:var(--acid)">✅ Оплата прошла!</h3>
+      <p style="text-align:center" class="hfont" style="font-size:22px">На баланс зачислено <b style="color:var(--gold)">${sum} ${rLabel(sum)}</b></p>
+      <div style="text-align:center;margin-top:14px"><button class="btn btn-green" onclick="closeModal()">Отлично</button></div>`);
+    addCur('gold', sum); confetti(40); snd(880,.3);
+    addXP(15);
+  }, 2200);
+}
+
+/* ===== EXCHANGE 1 rub = 2 green ===== */
+function exchCalc(){
+  const v = parseInt(document.getElementById('exchIn').value)||0;
+  document.getElementById('exchOut').textContent = fmt(v*2);
+}
+function doExchange(){
+  const v = parseInt(document.getElementById('exchIn').value)||0;
+  if(v<1){ toast('Минимум 1 рубль', true); return; }
+  if(S.gold < v){ toast('Не хватает рублей 🟡 — пополнись', true); return; }
+  S.gold -= v;
+  addCur('green', v*2);
+  S.exchHist.unshift({t:Date.now(), rub:v, grn:v*2});
+  S.exchHist = S.exchHist.slice(0,20);
+  toast(`🔁 Обменял ${v} ${rLabel(v)} → ${v*2} ${gLabel(v*2)}`);
+  snd(660,.2); confetti(18); addXP(8); save();
+  const box = document.getElementById('exchCoins');
+  for(let i=0;i<8;i++){
+    const c = document.createElement('div'); c.textContent='🟢';
+    c.style.cssText='position:absolute;left:50%;top:0;font-size:22px;transition:all 1s ease;pointer-events:none';
+    box.appendChild(c);
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ c.style.transform=`translate(${(Math.random()-.5)*220}px,120px) rotate(${Math.random()*360}deg)`; c.style.opacity='0'; }); });
+    setTimeout(()=>c.remove(),1100);
+  }
+  renderExchHist();
+}
+function renderExchHist(){
+  const b = document.getElementById('exchHist');
+  b.innerHTML = S.exchHist.length ? S.exchHist.map(h=>{
+    const d = new Date(h.t);
+    return `<div class="statline"><span>${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</span><span class="mono">${h.rub} 🟡 → <b style="color:var(--acid)">${h.grn} 🟢</b></span></div>`;
+  }).join('') : 'Пока пусто.';
+}
+
+/* ===== DAILY ===== */
+function claimDaily(){
+  const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  if(S.lastDaily === today){ toast('Уже забирал — приходи завтра 👋'); return; }
+  const yest = today - 86400000;
+  S.streak = (S.lastDaily === yest) ? Math.min(7, S.streak+1) : 1;
+  S.lastDaily = today;
+  const g = [30,50,80,120,180,260,400][S.streak-1], b = [1,2,3,4,6,8,12][S.streak-1];
+  addCur('green',g); addCur('bonus',b);
+  toast(`🎁 День ${S.streak}: +${g} зелени, +${b} ${bLabel(b)}`);
+  confetti(24); addXP(12); save(); renderWorld();
+}
+function dailyInfo(){
+  const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const el = document.getElementById('dailyInfo');
+  if(!el) return;
+  el.innerHTML = S.lastDaily===today
+    ? `Серия: ${S.streak} дн. из 7 — завтра награда больше`
+    : `Серия: ${S.streak}. Забирай каждый день без пропусков — награда растёт до 7 дня`;
+}
+
+/* ===== WHEEL ===== */
+const WHEEL_SEC = ['×0','×0.5','×1','×1.5','×2','×0','×3','×5','×0','ДЖЕКПОТ ×10','×1','×2'];
+function canFreeWheel(){
+  const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  return S.lastWheel !== today;
+}
+function openWheel(){
+  if(!canFreeWheel()){ modal(`<h3>🎡 Колесо</h3><p class="dim">Бесплатный спин уже крутил. Следующий — завтра. Или крутанись сейчас за 1 бонуску в казино → колесо.</p><button class="btn btn-neon" onclick="closeModal();go('casino')">В казино</button>`); return; }
+  modal(`<h3>🎡 Ежедневное колесо</h3><div class="dim" style="margin-bottom:10px">Сектора: ×0 … ×5 и ДЖЕКПОТ ×10</div><canvas id="wmCanvas" width="360" height="360" style="max-width:300px;margin:0 auto;display:block"></canvas><div style="text-align:center;margin-top:12px"><button class="btn btn-green pulse" onclick="spinWheelM()">Крутить!</button></div><div id="wmRes" class="hfont" style="text-align:center;font-size:20px;min-height:26px;margin-top:8px"></div>`);
+  drawWheel(document.getElementById('wmCanvas'), 0);
+}
+function drawWheel(cv, ang){
+  const ctx = cv.getContext('2d'); const w = cv.width, cx = w/2, cy = w/2, r = w/2-8;
+  const cols = ['#7c3aed','#2a2a44','#16a34a','#2a2a44','#0ea5e9','#7c3aed','#d97706','#facc15','#7c3aed','#dc2626','#2a2a44','#16a34a'];
+  ctx.clearRect(0,0,w,w);
+  for(let i=0;i<WHEEL_SEC.length;i++){
+    const a0 = ang + i*2*Math.PI/WHEEL_SEC.length, a1 = ang + (i+1)*2*Math.PI/WHEEL_SEC.length;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,a0,a1); ctx.closePath();
+    ctx.fillStyle = cols[i]; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.stroke();
+    ctx.save(); ctx.translate(cx+Math.cos((a0+a1)/2)*r*.62, cy+Math.sin((a0+a1)/2)*r*.62);
+    ctx.rotate((a0+a1)/2); ctx.fillStyle='#fff'; ctx.font='bold 13px Rubik'; ctx.textAlign='center';
+    ctx.fillText(WHEEL_SEC[i],0,4); ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,14,0,7); ctx.fillStyle='#0a0a12'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx-10,6); ctx.lineTo(cx+10,6); ctx.lineTo(cx,26); ctx.closePath();
+  ctx.fillStyle='#ffd166'; ctx.fill();
+}
+function wheelSpinCommon(getIdx, cvDone, done){
+  let ang = Math.random()*6.28, vel = 0.32+Math.random()*0.12, target = getIdx();
+  let ang2 = 2*Math.PI*6 + (target+0.5)*2*Math.PI/WHEEL_SEC.length - (Math.PI/2 - 0.15);
+  let cur = ang, started = null;
+  function frame(ts){
+    if(!started) started = ts;
+    const p = Math.min(1,(ts-started)/3800);
+    const e = 1-Math.pow(1-p,3);
+    cur = ang + (ang2-ang)*e;
+    cvDone(cur);
+    if(p<1) requestAnimationFrame(frame); else done(target);
+  }
+  requestAnimationFrame(frame);
+}
+function spinWheelM(){
+  const btns = document.querySelectorAll('#modalBox .btn'); btns.forEach(b=>b.disabled=true);
+  const cv = document.getElementById('wmCanvas');
+  wheelSpinCommon(
+    ()=>{ const r=Math.random();
+      if(r<0.18) return 0; if(r<0.40) return 1; if(r<0.55) return 2; if(r<0.65) return 3;
+      if(r<0.74) return 4; if(r<0.82) return 5; if(r<0.89) return 6; if(r<0.95) return 7; if(r<0.99) return 8; return 9; },
+    a=>drawWheel(cv,a),
+    (i)=>{
+      const sec = WHEEL_SEC[i]; let msg;
+      if(i===9){ addCur('green',500); addCur('bonus',20); msg='🎉 ДЖЕКПОТ! +500 зелени, +20 бонусок'; confetti(70); snd(990,.5); }
+      else if(i===0){ msg='💀 Пусто. Бывает.'; }
+      else if(i===5||i===8){ msg='💀 Пусто. Бывает.'; }
+      else if(i===1){ addCur('green',25); msg='+25 зелени'; }
+      else if(i===2){ addCur('green',50); msg='+50 зелени'; }
+      else if(i===3){ addCur('green',75); msg='+75 зелени'; }
+      else if(i===4){ addCur('green',100); msg='+100 зелени'; }
+      else if(i===6){ addCur('green',150); msg='+150 зелени'; }
+      else { addCur('green',250); msg='+250 зелени'; }
+      const now = new Date(); S.lastWheel = new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+      addXP(10); save(); renderWallet(); dailyInfo(); renderWorld();
+      document.getElementById('wmRes').innerHTML = msg;
+      if(msg.includes('ДЖЕКПОТ')) toast(msg);
+      btns.forEach(b=>b.disabled=false);
+    });
+}
+
+/* ===== AD ===== */
+function showAd(){
+  S.seenAd++;
+  modal(`<h3>📺 Рекламная пауза</h3><div style="text-align:center;padding:16px">
+    <div style="background:linear-gradient(135deg,#1e1e38,#2a2a4a);border-radius:14px;padding:30px 14px;border:1px dashed rgba(255,255,255,.2)">
+      <div style="font-size:40px">🎮</div><div class="hfont" style="margin-top:8px">Здесь будет твоя реклама</div>
+      <div class="dim" style="margin-top:6px;font-size:12px">В продакшене подключается рекламная сеть (Яндекс РСЯ и т.п.)</div>
+    </div>
+    <div class="dim mono" id="adTimer" style="margin-top:12px">Скидка через 5…</div>
+    </div>`);
+  let n = 5; const iv = setInterval(()=>{
+    n--; const el = document.getElementById('adTimer');
+    if(!el){ clearInterval(iv); return; }
+    el.textContent = `Скидка через ${n}…`;
+    if(n<=0){ clearInterval(iv);
+      el.textContent = '🎁 +2 бонуска за просмотр!';
+      addCur('bonus',2); addXP(5); snd(740,.2); save();
+      setTimeout(closeModal, 1200);
+    }
+  },1000);
+}
+
+/* ===== PROMO ===== */
+const PROMOS = { 'dropout': {g:500, b:10}, 'memlord': {g:150} };
+function usePromo(){
+  const v = (document.getElementById('promoInput').value||'').trim().toLowerCase();
+  if(!v) return;
+  if(PROMOS[v] && !S.promo.includes(v)){
+    S.promo.push(v);
+    addCur('green', PROMOS[v].g||0); addCur('bonus', PROMOS[v].b||0);
+    toast(`🎟 Промокод принят! +${PROMOS[v].g||0} зелени` + (PROMOS[v].b?`, +${PROMOS[v].b} бонусок`:''));
+    confetti(30); addXP(10); save();
+  } else if(S.promo.includes(v)){
+    toast('Этот код уже активирован', true);
+  } else {
+    modal(`<h3>🎟 Промокодов нет на сайте</h3><p class="dim">Все рабочие промокоды публикуются в нашем Telegram-канале — забирай там.</p><div class="row" style="margin-top:12px"><button class="btn btn-tg" onclick="openTG()">✈️ Открыть @dropoutmanager</button><button class="btn" onclick="closeModal()">Закрыть</button></div>`);
+  }
+}
+function openTG(){ window.open(TG_LINK,'_blank'); snd(520,.15); }
+</script>
+
+<script>
+/* ============ FARM (0.1 green per tap) ============ */
+const FARM_UPS = [
+  {id:'finger', name:'Крепкий палец', em:'👆', desc:'+0.1 зелени за тап', base:30, mult:1.6, type:'tap', val:0.1},
+  {id:'cat',    name:'Кофеиновый кот', em:'🐱', desc:'+0.3 зелени/сек пассивно', base:60, mult:1.65, type:'pass', val:0.3},
+  {id:'robot',  name:'Робот-таппер', em:'🤖', desc:'+1.2 зелени/сек пассивно', base:400, mult:1.7, type:'pass', val:1.2},
+  {id:'cpu',    name:'Ферма серверов', em:'🖥', desc:'+6 зелени/сек пассивно', base:2500, mult:1.75, type:'pass', val:6},
+  {id:'quant',  name:'Квантовый реактор', em:'⚛️', desc:'+30 зелени/сек пассивно', base:15000, mult:1.8, type:'pass', val:30},
+  {id:'singul', name:'Сингулярность', em:'🌀', desc:'+150 зелени/сек пассивно', base:90000, mult:1.85, type:'pass', val:150},
+];
+function farmUpLvl(id){ return S.farmUp[id]||0; }
+function farmUpCost(u){ return Math.round(u.base * Math.pow(u.mult, farmUpLvl(u.id))); }
+function farmTapRate(){ return 0.1 + 0.1*farmUpLvl('finger'); }
+function farmPassiveRate(){
+  let p = 0;
+  for(const u of FARM_UPS) if(u.type==='pass') p += u.val * farmUpLvl(u.id);
+  if(vipOn()) p *= 1.5;
+  return p;
+}
+function farmTap(e){
+  addCur('green', farmTapRate()*boostMult());
+  S.taps++; addXP(0.4);
+  const t = document.createElement('div');
+  t.textContent = '+'+(farmTapRate()*boostMult()).toFixed(1)+' 🟢';
+  const r = document.getElementById('tapBtn').getBoundingClientRect();
+  t.style.cssText = `position:fixed;left:${e.clientX||r.left+r.width/2}px;top:${e.clientY||r.top}px;font-weight:900;color:var(--acid);pointer-events:none;z-index:99;transition:all .9s ease;transform:translateX(-50%)`;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ t.style.transform='translate(-50%,-70px)'; t.style.opacity='0'; }); });
+  setTimeout(()=>t.remove(),950);
+  snd(300+Math.random()*200,.06,'triangle',.05);
+}
+function renderFarm(){
+  document.getElementById('farmTap').textContent = (farmTapRate()*boostMult()).toFixed(1)+' зелени/тап'+(boostMult()>1?' (буст ×2!)':'');
+  document.getElementById('farmPassive').textContent = farmPassiveRate().toFixed(1);
+  document.getElementById('farmUpg').innerHTML = FARM_UPS.map(u=>{
+    const lv = farmUpLvl(u.id), cost = farmUpCost(u);
+    return `<div class="gcard" onclick="buyFarmUp('${u.id}')">
+      <div class="row" style="justify-content:space-between">
+        <div><div class="hfont" style="font-size:16px">${u.em} ${u.name}</div>
+        <div class="dim">${u.desc}</div></div>
+        <div style="text-align:center"><div class="hfont" style="color:var(--acid)">ур. ${lv}</div></div>
+      </div>
+      <button class="btn btn-green btn-sm" style="width:100%;margin-top:10px">Купить — ${fmt(cost)} 🟢</button>
+    </div>`;
+  }).join('');
+}
+function buyFarmUp(id){
+  const u = FARM_UPS.find(x=>x.id===id);
+  if(!pay('green', farmUpCost(u))) return;
+  S.farmUp[id] = farmUpLvl(id)+1;
+  toast(`${u.em} ${u.name} → ур. ${farmUpLvl(id)}`);
+  snd(520,.2); addXP(6); save(); renderFarm();
+}
+/* passive offline tick */
+function farmTick(){
+  const p = farmPassiveRate();
+  if(p>0){
+    const now = Date.now(), dt = Math.min((now - (S.farmLast||now))/1000, 7200);
+    if(dt >= 2){
+      addCur('green', p*dt, true);
+      S.farmLast = now; save();
+    }
+  }
+}
+setInterval(farmTick, 4000);
+
+/* ============ MEM CASES ============ */
+const RAR = [
+  {id:'c', name:'Обычный', cls:'r-c', sell:5,  col:'#6b7fa8'},
+  {id:'r', name:'Редкий',  cls:'r-r', sell:25, col:'#66a3e0'},
+  {id:'e', name:'Эпический', cls:'r-e', sell:120, col:'#a78bfa'},
+  {id:'l', name:'Легендарный', cls:'r-l', sell:600, col:'#fbbf24'},
+  {id:'m', name:'Мифический', cls:'r-m', sell:3000, col:'#f87171'},
+];
+const MEMES = [
+  {em:'💧', name:'Вжух', rar:'c'},
+  {em:'💀', name:'Кринж', rar:'c'},
+  {em:'🤡', name:'Клоунада', rar:'c'},
+  {em:'🗿', name:'Моё уважение', rar:'c'},
+  {em:'🐸', name:'Жаба душит', rar:'c'},
+  {em:'😭', name:'Грустный Дэдпул', rar:'r'},
+  {em:'🕺', name:'Гангнам стайл', rar:'r'},
+  {em:'🎵', name:'Harlem Shake', rar:'r'},
+  {em:'🤯', name:'Мозг взорвался', rar:'r'},
+  {em:'🥶', name:'Холодно-багрово', rar:'r'},
+  {em:'💃', name:'Мамбанья', rar:'e'},
+  {em:'🫠', name:'Тающая жаба', rar:'e'},
+  {em:'🤖', name:'Skibidi Toilet', rar:'e'},
+  {em:'👨‍🦲', name:'Батя в здании', rar:'e'},
+  {em:'🦴', name:'Костяная лихорадка', rar:'e'},
+  {em:'🔥', name:'Это фиаско, братан', rar:'l'},
+  {em:'⏳', name:'Ждун', rar:'l'},
+  {em:'👑', name:'Король Скамбиди', rar:'m'},
+];
+const CASES = [
+  {id:'meme', name:'Мем-кейс', em:'📦', cost:120, cur:'green', odds:{c:62, r:25, e:10, l:2.7, m:0.3}},
+  {id:'legend', name:'Легенды TT', em:'🗃', cost:600, cur:'green', odds:{c:40, r:34, e:18, l:6.5, m:1.5}},
+  {id:'premium', name:'Премиум-кейс', em:'💎', cost:30, cur:'gold', odds:{c:0, r:50, e:34, l:12, m:4}},
+];
+function renderCases(){
+  const sel = document.getElementById('casePick');
+  sel.innerHTML = CASES.map(c=>`<option value="${c.id}">${c.em} ${c.name} — ${c.cost} ${c.cur==='green'?'🟢':'🟡'}</option>`).join('');
+  renderCaseChances(); renderInv();
+}
+function curCase(){ return CASES.find(c=>c.id===document.getElementById('casePick').value) || CASES[0]; }
+function renderCaseChances(){
+  const c = curCase();
+  const col = {c:'#6b7fa8', r:'#66a3e0', e:'#a78bfa', l:'#fbbf24', m:'#f87171'};
+  const names = {c:'Обычные', r:'Редкие', e:'Эпик', l:'Легендарки', m:'Мифика'};
+  document.getElementById('caseChances').innerHTML = `<div class="dim" style="margin-bottom:4px">Шансы (${c.name}):</div><div class="chance-bar">` +
+    Object.entries(c.odds).map(([k,v])=>`<div style="width:${v}%;background:${col[k]}" title="${names[k]}: ${v}%"></div>`).join('') +
+    `</div><div class="dim mono">` + Object.entries(c.odds).filter(([,v])=>v>0).map(([k,v])=>`${names[k]}: ${v}%`).join(' · ') + `</div>`;
+}
+function rollRarity(odds){
+  let r = Math.random()*100;
+  for(const [k,v] of Object.entries(odds)){ if(r < v) return k; r -= v; }
+  return 'c';
+}
+function rollMeme(odds){
+  const rar = rollRarity(odds);
+  const pool = MEMES.filter(m=>m.rar===rar);
+  return pool[Math.floor(Math.random()*pool.length)] || MEMES[0];
+}
+function roulHTML(item){
+  return `<div class="rItem ${RAR.find(r=>r.id===item.rar).cls}"><span class="em">${item.em}</span><span>${item.name}</span><span style="opacity:.7">${RAR.find(r=>r.id===item.rar).name}</span></div>`;
+}
+function buildRoul(winners){
+  const items = [];
+  for(let i=0;i<60;i++) items.push(rollMeme(curCase().odds));
+  winners.forEach((w,idx)=> items.splice(50+idx, 1, w));
+  return items;
+}
+let roulBusy = false;
+function openCase(count){
+  if(roulBusy){ toast('Лента крутится — не спеши 🎡', true); return; }
+  const c = curCase();
+  const total = c.cost*count;
+  if(!pay(c.cur, total)) return;
+  const winners = Array.from({length:count}, ()=>rollMeme(c.odds));
+  const items = buildRoul(winners);
+  const strip = document.getElementById('roul');
+  strip.innerHTML = items.map(roulHTML).join('');
+  strip.style.transition = 'none'; strip.style.transform = 'translateX(0)';
+  roulBusy = true;
+  document.getElementById('roulResult').innerHTML = `<span class="dim">Крутим ${count}…</span>`;
+  snd(200,.1,'square',.04);
+  requestAnimationFrame(()=>{
+    const wrapW = document.getElementById('roulWrap').clientWidth;
+    const targetIdx = 50; // center winner
+    const itemW = 118; // 110 + gap 8
+    const offset = targetIdx*itemW + itemW/2 - wrapW/2 + Math.random()*40 - 20;
+    strip.style.transition = 'transform '+(4.2+count*0.4)+'s cubic-bezier(.12,.75,.15,1)';
+    strip.style.transform = `translateX(-${offset}px)`;
+    let ticked = 0;
+    const tickIv = setInterval(()=>{ snd(600+Math.random()*300,.03,'square',.03); if(++ticked>25) clearInterval(tickIv); }, 150);
+    setTimeout(()=>{
+      clearInterval(tickIv);
+      const card = strip.children[targetIdx];
+      if(card) card.classList.add('won');
+      snd(880,.4);
+      let html = '';
+      S.stats.cases = (S.stats.cases||0) + winners.length;
+      winners.forEach(w=>{
+        const r = RAR.find(x=>x.id===w.rar);
+        if(w.rar==='l'||w.rar==='m') S.gotLegend = true;
+        S.inv.push({em:w.em, name:w.name, rar:w.rar, t:Date.now()});
+        html += `<div class="rItem ${r.cls}" style="display:inline-flex;min-width:120px;margin:4px"><span class="em">${w.em}</span><span>${w.name}</span><span>${r.name}</span></div>`;
+        if(w.rar==='l'||w.rar==='m'){ confetti(50); snd(1200,.5); }
+        addXP(5);
+      });
+      document.getElementById('roulResult').innerHTML = `<div>Дроп:</div>${html}<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-green" onclick="sellAllDropped()">Продать дроп</button><span class="dim" id="dropVal"></span></div>`;
+      dropCache = winners.slice();
+      updateDropVal();
+      renderInv(); roulBusy = false; save();
+    }, (4.2+count*0.4)*1000 + 60);
+  });
+}
+let dropCache = [];
+function dropValue(){ return dropCache.reduce((s,m)=>s + RAR.find(r=>r.id===m.rar).sell, 0); }
+function updateDropVal(){ const el = document.getElementById('dropVal'); if(el) el.textContent = `Ценность дропа: ${dropValue()} 🟢`; }
+function sellAllDropped(){
+  if(!dropCache.length) return;
+  addCur('green', dropValue());
+  toast(`Продал ${dropCache.length} мем(ов) за ${dropValue()} зелени`);
+  dropCache = []; document.getElementById('roulResult').innerHTML=''; renderInv(); save();
+}
+function renderInv(){
+  const b = document.getElementById('invBox');
+  if(!S.inv.length){ b.innerHTML = '<span class="dim">Склад пуст. Крути кейсы!</span>'; return; }
+  const byName = {};
+  for(const m of S.inv){ const k = m.name; (byName[k] = byName[k]||{...m, n:0}).n++; }
+  const total = S.inv.reduce((s,m)=>s + RAR.find(r=>r.id===m.rar).sell, 0);
+  b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <span class="dim">Всего мемов: ${S.inv.length} · рыночная стоимость: <b style="color:var(--acid)">${total} 🟢</b></span>
+      <button class="btn btn-sm btn-green" onclick="sellInvAll()">Продать всё</button>
+    </div>` +
+    Object.values(byName).map(m=>{
+      const r = RAR.find(x=>x.id===m.rar);
+      return `<div class="statline"><span><span class="em" style="font-size:20px">${m.em}</span> ${m.name} <span style="color:${r.col};font-size:12px">${r.name}</span></span><span class="mono">×${m.n} · ${r.sell*m.n} 🟢</span></div>`;
+    }).join('');
+}
+function sellInvAll(){
+  if(!S.inv.length) return;
+  const total = S.inv.reduce((s,m)=>s + RAR.find(r=>r.id===m.rar).sell, 0);
+  addCur('green', total);
+  toast(`Склад продан: +${total} зелени`); confetti(20);
+  S.inv = []; dropCache = []; renderInv(); save();
+}
+
+/* ============ SHOP ============ */
+const SHOP = [
+  {id:'p1', name:'Стикер-пачка', em:'🩹', cost:50,  desc:'Набор стикеров с мемами DROPOUT в Telegram'},
+  {id:'p2', name:'Аватар от художника', em:'🎨', cost:200, desc:'Персональный аватар в стиле DROPOUT'},
+  {id:'p3', name:'Роль в канале', em:'👑', cost:350, desc:'Особая роль «Мем-лорд» в @dropoutmanager'},
+  {id:'p4', name:'Секретный кейс', em:'🗝', cost:500, desc:'Кейс с уникальными мемами, выдают менеджеры'},
+  {id:'p5', name:'Вечный VIP', em:'🕶', cost:1500, desc:'VIP-статус навсегда + бонус в канале'},
+];
+function renderWorld(){
+  const worldCards = [
+    ['farm','💰','Фарм','Тапай баржу — капает зелень'],
+    ['cases','📦','Мем-кейсы','Крути рулетку мемов из TikTok'],
+    ['casino','🎰','Казино','Слоты, краш, мины, кости, колесо'],
+    ['exchange','🔁','Обмен валюты','Рубли → зелень 1:2'],
+    ['quiz','🧠','Мем-квиз','10/20/50 вопросов — до 999 зелени'],
+    ['quest','📜','Квест','История выпавшего с финалами'],
+    ['chat','💬','Менеджер','Чат и поддержка онлайн'],
+    ['auction','🔨','Аукцион','Скоро в городе'],
+  ];
+  document.getElementById('worldGrid').innerHTML = worldCards.map(([id,em,n,d])=>
+    `<div class="gcard" onclick="go('${id}')"><div style="font-size:36px">${em}</div><div class="hfont" style="margin:8px 0 4px">${n}</div><div class="dim">${d}</div></div>`).join('');
+  document.getElementById('shopGrid').innerHTML = SHOP.map(p=>
+    `<div class="gcard" style="cursor:default">
+      <div style="font-size:34px;text-align:center">${p.em}</div>
+      <div class="hfont" style="margin:8px 0 4px;text-align:center">${p.name}</div>
+      <div class="dim" style="text-align:center;font-size:12px;min-height:36px">${p.desc}</div>
+      <div style="text-align:center;margin:8px 0" class="hfont" ><b style="color:#ffd166">${p.cost} бонусков</b></div>
+      <button class="btn btn-tg btn-sm" style="width:100%" onclick="shopClaim('${p.id}')">✈️ Получить в Telegram</button>
+    </div>`).join('');
+  dailyInfo();
+}
+function shopClaim(id){
+  const p = SHOP.find(x=>x.id===id);
+  if(!pay('bonus', p.cost)) return;
+  S.bought.push({id, t:Date.now()});
+  const msg = encodeURIComponent(`Привет! Хочу получить приз из шопа DROPOUT: «${p.name}» (${p.cost} бонусков). Мой ник: ${S.nick}`);
+  window.open(`${TG_LINK}?text=${msg}`,'_blank');
+  toast('🎉 Заявка создана! Списание подтвердит менеджер в Telegram');
+  addXP(15); save();
+}
+</script>
+
+<script>
+/* ============ CASINO ============ */
+function casCur(){ return document.getElementById('casCur').value; }
+function casBet(){ return Math.max(1, parseInt(document.getElementById('casBet').value)||1); }
+function casLbl(){ const c=casCur(),b=casBet(); return c==='green'?`${b} ${gLabel(b)}`:`${b} ${bLabel(b)}`; }
+function renderCasino(){ buildReels(); drawCrash(); drawWheelStatic(); drawMineGrid(); }
+
+/* --- slots --- */
+const SYM = ['🔥','💀','🤡','🗿','🕺','🪙','💎','👑'];
+function buildReels(){
+  ['reel1','reel2','reel3'].forEach(id=>{
+    const el = document.getElementById(id);
+    let html = '';
+    for(let i=0;i<26;i++){ html += `<span>${SYM[Math.floor(Math.random()*SYM.length)]}</span>`; }
+    el.innerHTML = html; el.style.transition='none'; el.style.transform='translateY(0)';
+  });
+}
+let slotBusy = false;
+function spinSlots(){
+  if(slotBusy) return;
+  const cur = casCur(), bet = casBet();
+  if(!pay(cur, bet)) return;
+  slotBusy = true;
+  document.getElementById('slotBtn').disabled = true;
+  document.getElementById('slotRes').textContent = '';
+  snd(220,.15,'square');
+  const res = [0,0,0].map(()=>SYM[Math.floor(Math.random()*SYM.length)]);
+  ['reel1','reel2','reel3'].forEach((id, i)=>{
+    const el = document.getElementById(id);
+    let html = '';
+    for(let k=0;k<30;k++) html += `<span>${SYM[Math.floor(Math.random()*SYM.length)]}</span>`;
+    html += `<span>${res[i]}</span>`;
+    for(let k=0;k<6;k++) html += `<span>${SYM[Math.floor(Math.random()*SYM.length)]}</span>`;
+    el.innerHTML = html;
+    el.style.transition='none'; el.style.transform='translateY(0)';
+    void el.offsetWidth;
+    const total = el.children.length;
+    const dur = 1.4 + i*0.7;
+    setTimeout(()=>{
+      el.style.transition = `transform ${dur}s cubic-bezier(.15,.85,.2,1)`;
+      el.style.transform = `translateY(-${(total-1)*92}px)`;
+      snd(500+i*150,.12);
+    }, i*250);
+    setTimeout(()=>{ snd(700+i*150,.2); }, (i*250+dur*1000-80));
+  });
+  setTimeout(()=>{
+    slotBusy = false; document.getElementById('slotBtn').disabled = false;
+    let mult = 0;
+    const [a,b,c] = res;
+    if(a===b && b===c) mult = (a==='💎') ? 50 : (a==='🔥') ? 25 : 10;
+    else if(a===b || b===c || a===c) mult = 2;
+    const box = document.getElementById('slotRes');
+    if(mult>0){
+      const win = Math.round(bet*mult);
+      addCur(cur, win);
+      box.innerHTML = `<span style="color:var(--acid)">+${win} ${cur==='green'?'🟢 зелени':'🎁 бонусок'} (×${mult})</span>`;
+      confetti(mult>=10?60:20); snd(900,.4);
+      addXP(mult>=10?12:5);
+    } else {
+      box.innerHTML = `<span style="color:var(--dim)">Мимо. Попробуй ещё 🎰</span>`;
+    }
+    S.stats.slots = (S.stats.slots||0)+1; save();
+  }, 3100);
+}
+
+/* --- crash --- */
+let crashState = null;
+function crashPoint(){
+  const r = Math.random();
+  if(r < 0.04) return 1.0;
+  return Math.max(1, Math.floor((0.99/(1-r))*100)/100);
+}
+function drawCrash(mult, crashed){
+  const cv = document.getElementById('crashCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = '#0d0d1a'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  for(let y=0;y<cv.height;y+=30){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cv.width,y); ctx.stroke(); }
+  if(mult){
+    const px = Math.min(cv.width-40, 40 + Math.log(mult)*60);
+    const py = cv.height-30 - Math.min(cv.height-80, Math.log(mult)*55);
+    ctx.strokeStyle = crashed ? '#ff3b6b' : '#39ff88';
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(40, cv.height-30);
+    ctx.lineTo(px, py); ctx.stroke();
+    ctx.font = 'bold 40px Unbounded, sans-serif';
+    ctx.fillStyle = crashed ? '#ff3b6b' : '#39ff88';
+    ctx.fillText('×'+mult.toFixed(2), px+8, py-8);
+    if(!crashed){ ctx.font='34px sans-serif'; ctx.fillText('🚀', px-6, py+26); }
+    else { ctx.font='40px sans-serif'; ctx.fillText('💥', px, py); }
+  }
+}
+function crashBet(){
+  if(crashState){ return; }
+  const cur = casCur(), bet = casBet();
+  if(!pay(cur, bet)) return;
+  const point = crashPoint();
+  crashState = {bet, cur, mult:1, point, dead:false};
+  document.getElementById('crashBetBtn').disabled = true;
+  document.getElementById('crashOutBtn').disabled = false;
+  snd(300,.1);
+  const iv = setInterval(()=>{
+    if(!crashState){ clearInterval(iv); return; }
+    crashState.mult = Math.round((crashState.mult + 0.012 + crashState.mult*0.004)*100)/100;
+    document.getElementById('crashMult').textContent = '×'+crashState.mult.toFixed(2);
+    drawCrash(crashState.mult, false);
+    if(crashState.mult >= crashState.point){
+      clearInterval(iv);
+      crashState.dead = true;
+      document.getElementById('crashMult').textContent = '×'+crashState.mult.toFixed(2)+' 💥';
+      drawCrash(crashState.mult, true);
+      toast(`💥 Взрыв на ×${crashState.mult.toFixed(2)} — ставка сгорела`, true);
+      snd(120,.4,'sawtooth',.12);
+      document.getElementById('crashBetBtn').disabled = false;
+      document.getElementById('crashOutBtn').disabled = true;
+      S.stats.crashLose = (S.stats.crashLose||0)+1;
+      crashHistory.push(crashState.mult); crashHistory = crashHistory.slice(-12);
+      document.getElementById('crashLog').innerHTML = 'История: ' + crashHistory.map(m=>`<b style="color:${m<2?'var(--red)':'var(--acid)'}">×${m.toFixed(2)}</b>`).join(' ');
+      save(); crashState = null;
+    }
+  }, 60);
+}
+let crashHistory = [];
+function crashOut(){
+  if(!crashState || crashState.dead) return;
+  const win = Math.floor(crashState.bet * crashState.mult);
+  addCur(crashState.cur, win);
+  toast(`✅ Забрал ×${crashState.mult.toFixed(2)}: +${win} ${crashState.cur==='green'?'🟢':'🎁'}`);
+  confetti(20); snd(800,.3);
+  document.getElementById('crashBetBtn').disabled = false;
+  document.getElementById('crashOutBtn').disabled = true;
+  S.stats.crashWin = (S.stats.crashWin||0)+1;
+  crashHistory.push(crashState.mult); crashHistory = crashHistory.slice(-12);
+  document.getElementById('crashLog').innerHTML = 'История: ' + crashHistory.map(m=>`<b style="color:${m<2?'var(--red)':'var(--acid)'}">×${m.toFixed(2)}</b>`).join(' ');
+  addXP(6); save(); crashState = null;
+}
+
+/* --- wheel in casino (paid spin, 1 bonus) --- */
+function drawWheelStatic(){ const cv = document.getElementById('wheelCanvas'); if(cv) drawWheelCv(cv, 0); }
+function drawWheelCv(cv, ang){ drawWheel(cv, ang); }
+function spinWheel(){
+  if(!pay('bonus', 1)) return;
+  document.getElementById('wheelSpinBtn').disabled = true;
+  document.getElementById('wheelRes').textContent = '';
+  const cv = document.getElementById('wheelCanvas');
+  wheelSpinCommon(
+    ()=>{ const r=Math.random();
+      if(r<0.18) return 0; if(r<0.40) return 1; if(r<0.55) return 2; if(r<0.65) return 3;
+      if(r<0.74) return 4; if(r<0.82) return 5; if(r<0.89) return 6; if(r<0.95) return 7; if(r<0.99) return 8; return 9; },
+    a=>drawWheel(cv,a),
+    (i)=>{
+      document.getElementById('wheelSpinBtn').disabled = false;
+      const sec = WHEEL_SEC[i]; let msg, win = 0;
+      if(i===9){ win = 500; addCur('green',win); addCur('bonus',20); msg='🎉 ДЖЕКПОТ! +500 зелени +20 бонусок'; confetti(70); }
+      else if(i===0||i===5||i===8){ msg='💀 Пусто'; }
+      else if(i===1){ win=25; } else if(i===2){ win=50; } else if(i===3){ win=75; }
+      else if(i===4){ win=100; } else if(i===6){ win=150; } else if(i===7){ win=250; }
+      if(win>0){ addCur('green',win); msg=`+${win} 🟢 зелени`; confetti(win>=250?50:20); snd(900,.4); }
+      document.getElementById('wheelRes').innerHTML = msg;
+      addXP(8); save();
+    });
+}
+
+/* --- mines --- */
+let mine = null;
+function drawMineGrid(){
+  const g = document.getElementById('mineGrid');
+  g.innerHTML = '';
+  for(let i=0;i<25;i++){
+    const cell = document.createElement('div');
+    cell.className = 'mcell'; cell.innerHTML = '<span class="inner">▪</span>';
+    cell.onclick = ()=>mineOpen(i);
+    g.appendChild(cell);
+  }
+}
+function mineOpen(i){
+  if(!mine){
+    const cnt = parseInt(document.getElementById('mineCnt').value)||5;
+    if(!pay(casCur(), casBet())) return;
+    const bombs = new Set();
+    while(bombs.size < cnt) bombs.add(Math.floor(Math.random()*25));
+    mine = {bombs, opened:new Set(), mult:1, cnt, bet:casBet(), cur:casCur(), dead:false};
+    document.getElementById('mineRes').textContent = 'Игра пошла. Осторожно.';
+    document.getElementById('mineCashBtn').disabled = false;
+  }
+  if(mine.dead || mine.opened.has(i)) return;
+  const cells = document.getElementById('mineGrid').children;
+  if(mine.bombs.has(i)){
+    mine.dead = true;
+    cells[i].classList.add('boom'); cells[i].innerHTML = '<span class="inner">💥</span>';
+    for(let k=0;k<25;k++) if(mine.bombs.has(k) && k!==i){ cells[k].innerHTML='<span class="inner">💣</span>'; }
+    toast('💣 Мина! Ставка сгорела', true); snd(110,.4,'sawtooth',.12);
+    document.getElementById('mineCashBtn').disabled = true;
+    document.getElementById('mineRes').textContent = 'Взрыв! Попробуй ещё раз.';
+    S.stats.mineLose = (S.stats.mineLose||0)+1; save(); mine = null; drawMineGrid();
+    setTimeout(()=>{},0);
+    document.getElementById('mineMult').textContent = '1.00';
+    return;
+  }
+  mine.opened.add(i);
+  cells[i].innerHTML = '<span class="inner" style="color:var(--acid)">💎</span>';
+  cells[i].classList.add('open'); snd(660,.1);
+  const safeLeft = 25 - mine.cnt - mine.opened.size;
+  const mult = Math.max(1, Math.floor((0.97 * 25 / (25-mine.cnt)) * (1 + mine.opened.size*0.06) * 100)/100);
+  mine.mult = mult;
+  document.getElementById('mineMult').textContent = mult.toFixed(2);
+  if(safeLeft === 0){
+    const win = Math.floor(mine.bet*mult); addCur(mine.cur, win);
+    toast(`🏅 Поле зачищено! +${win}`); confetti(40); snd(950,.4);
+    S.stats.mineWin = (S.stats.mineWin||0)+1; addXP(10); save(); mine=null;
+    document.getElementById('mineCashBtn').disabled = true;
+    document.getElementById('mineRes').textContent = 'Полное зачистище! Отлично.';
+    drawMineGrid();
+    document.getElementById('mineMult').textContent = '1.00';
+  }
+}
+function mineCash(){
+  if(!mine || mine.dead || !mine.opened.size) return;
+  const win = Math.floor(mine.bet*mine.mult);
+  addCur(mine.cur, win);
+  toast(`✅ Кэшаут ×${mine.mult.toFixed(2)}: +${win} ${mine.cur==='green'?'🟢 зелени':'🎁 бонусок'}`);
+  confetti(16); snd(820,.3);
+  S.stats.mineWin = (S.stats.mineWin||0)+1; addXP(6); save();
+  mine = null;
+  document.getElementById('mineCashBtn').disabled = true;
+  document.getElementById('mineRes').textContent = 'Забрал и вышел — тактика уважает.';
+  drawMineGrid();
+  document.getElementById('mineMult').textContent = '1.00';
+}
+
+/* --- dice --- */
+function rollDice(kind){
+  const bet = casBet(), cur = casCur();
+  if(!pay(cur, bet)) return;
+  const d1 = document.getElementById('d1'), d2 = document.getElementById('d2');
+  d1.classList.add('shake'); d2.classList.add('shake');
+  snd(300,.2,'square',.05);
+  let r1, r2;
+  const fin = ()=>{
+    r1 = 1+Math.floor(Math.random()*6); r2 = 1+Math.floor(Math.random()*6);
+    const sum = r1+r2;
+    d1.textContent = ['','⚀','⚁','⚂','⚃','⚄','⚅'][r1] || r1;
+    d2.textContent = ['','⚀','⚁','⚂','⚃','⚄','⚅'][r2] || r2;
+    let win = 0, msg;
+    if(kind==='low' && sum<7) win = Math.floor(bet*2.1);
+    if(kind==='high' && sum>7) win = Math.floor(bet*2.1);
+    if(kind==='seven' && sum===7) win = Math.floor(bet*4.8);
+    const box = document.getElementById('diceRes');
+    if(win>0){ addCur(cur,win); msg = `🎲 ${r1}+${r2}=${sum} → +${win} ${cur==='green'?'🟢':'🎁'}`; confetti(16); snd(850,.3); addXP(5); }
+    else { msg = `🎲 ${r1}+${r2}=${sum} → мимо`; snd(200,.2); }
+    box.innerHTML = msg;
+    S.stats.dice = (S.stats.dice||0)+1; save();
+  };
+  let n = 0;
+  const iv = setInterval(()=>{
+    d1.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random()*6)];
+    d2.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random()*6)];
+    if(++n >= 6){ clearInterval(iv); fin(); d1.classList.remove('shake'); d2.classList.remove('shake'); }
+  }, 90);
+}
+</script>
+
+<script>
+/* ============ QUIZ (memes) ============ */
+const QUIZ = [
+  ['Что делает жаба, когда душит?','Поёт','Душит','Квакает','Молчит',2],
+  ['«Это фиаско, братан» — чья фраза?','Собаки','Кота','Братана','Учителя',0],
+  ['Как двигался герой Gangnam Style?','Как лошадка','Как краб','Как робот','Как ракета',0],
+  ['Что стало «вжух» в меме?','Портфель','Шляпа','Кот','Велосипед',1],
+  ['Сколько пальцев поднимает батя, когда «в здании»?','Один','Два','Пять','Ни одного',0],
+  ['Кто такой Ждун?','Фигура сидения','Пёс','Робот','Кот',0],
+  ['Harlem Shake — это танец или…','Танец','Напиток','Стиль одежды','Школа',0],
+  ['Что означает «кринж»?','Смущение от второго лица','Радость','Голод','Сон',0],
+  ['Skibidi Toilet — что это?','Сериал про туалеты и головы','Ресторан','Игра в прятки','Город',0],
+  ['«Моё уважение» сопровождается какой статуей?','🗿','🏆','🗿+🕊','🎖',0],
+  ['Кто кричит «Мамбанья»?','Танцор','Повар','Диджей','Кот',0],
+  ['«Скамбиди» — это про…','Скручивания','Скамейки','Скамотов','Скам',0],
+  ['Какой мем про «холодно»?','🥶','🔥','🌞','❄️+',0],
+  ['Мем «тики-тики-тики» откуда?','Часы','ТикТок','Кукушка','Метроном',1],
+  ['«Я не поняла, но очень интересно» — это…','Реакция на хайп','Урок математики','Рецепт','Код',0],
+  ['Что такое «вайб»?','Атмосфера','Зарядка','Батарея','Стройка',0],
+  ['Мем с котом и огурцом — почему кот прыгает?','Боится','Любит','Играет','Спит',0],
+  ['«Она не твой друг» — что дальше?','«Она мимикрия»','«Она враг»','«Она кот»','«Она бот»',0],
+  ['Как выглядит легендарная «жаба Душитель»?','🤢','🐸','😐','🥲',1],
+  ['Слово «краш» в интернете значит…','Обрушение сервера','Влюблённость','Сборщик мусора','Строитель',1],
+  ['Мем «Мы на лестнице» — что там танцуют?','Всё что угодно','Вальс','Танго','Фламенко',0],
+  ['Что делал кот «панин» на видео?','Ел банан','Пел','Спал','Бегал',0],
+  ['«Скибиди» — это…','Ритм из песни','Название города','Блюдо','Вид спорта',0],
+  ['Мем «Она сказала мне что я ей нравлюсь»…','Это радость','Это сон','Это банка с огурцами','Это проверка',2],
+  ['Какой мем про «внезапный поворот»?','📈','📉','🔄','🌀',1],
+  ['«Движ» в тиктоке — это…','Движение и хайп','Мебель','Диван','Двор',0],
+  ['Кто поёт «Скррр»?','Рэпер','Кот','Робот','Птица',0],
+  ['Мем «танцующий под дождём» человек…','Счастлив','Мокрый','Ждёт такси','Всё вместе',3],
+  ['Как переводится «bruh»?','Брат','Друг','Момент','Всё вместе',3],
+  ['Мем «сфоткай меня красиво» обычно про…','Невыразимую красоту','Еду','Мебель','Дом',0],
+  ['Что такое «шейк» в Harlem Shake?','Тряска','Шейкер','Коктейль','Стакан',0],
+  ['«Не грусти, глаза» — чья фраза?','Из мема с котом','Из сериала','Из песни','Всё вместе',0],
+  ['Мем «стул» в ТикТоке обычно связан с…','Силой и мастерством','Мебелью','Дизайном','Сном',0],
+  ['«Слово пацана» — что это по миру мемов?','Сила слова','Булочка','Ремень','Парта',0],
+  ['«Мем-лорд» в DROPOUT — это…','Титул за знание мемов','Модератор','Бот','Админ',0],
+  ['Что такое «по-пацански»?','Честно и просто','Сложно','Скучно','Медленно',0],
+  ['Мем «соло на сабвуфере» — где играет?','В машине','В бане','В лесу','В школе',0],
+  ['«Не спрашивай» — что обычно дальше?','«Сам не знаю»','«Расскажу»','«Учитель скажет»','«Кот скажет»',0],
+  ['Какой мем про «ожидание/реальность»?','Лестница','Колесо','Весы','Ключ',0],
+  ['«Зумер» в мемах — это…','Молодёжь','Фонарик','Камера','Объектив',0],
+  ['Мем «соло на гитаре» в ТикТоке чаще всего…','Эпичный','Грустный','Тихий','Шумный',0],
+  ['«Кринжануть» — это…','Смузить других','Танцевать','Петь','Спать',0],
+  ['Мем «сбалансированный завтрак» — что там?','Много еды','Диета','Чай','Вода',0],
+  ['«Батя в здании» — что делает батя?','Заходит с уважением','Спит','Готовит','Бегает',0],
+  ['Что означает мем «0.5 скоростя»?','Замедление','Ускорение','Полёт','Стоп',0],
+  ['Мем «жиза» — это про…','Реальность и усталость','Радость','Музыку','Спорт',0],
+  ['Кто такой «Гримейс» по ТикТоку?','Мем-персонаж','Певец','Блогер','Актёр',0],
+  ['«Пранк удался» — значит…','Розыгрыш сработал','Провал','Сон','Ошиб',0],
+  ['Мем «мем» — это…','Мем о меме','Картинка','Видео','Игра',0],
+  ['«Вжух» обычно сопровождается…','Волшебством','Грустью','Скукой','Тишиной',0],
+];
+let quizRun = null;
+function startQuiz(n){
+  quizRun = {total:n, idx:0, right:0, order:shuffle([...Array(QUIZ.length).keys()]).slice(0,Math.min(n,QUIZ.length)), answered:false};
+  document.getElementById('quizPlay').style.display='';
+  renderQuizQ();
+  document.getElementById('quizPlay').scrollIntoView({behavior:'smooth'});
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function renderQuizQ(){
+  const box = document.getElementById('quizPlay');
+  const q = quizRun;
+  if(q.idx >= q.order.length){ finishQuiz(); return; }
+  const item = QUIZ[q.order[q.idx]];
+  box.innerHTML = `
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <span class="dim mono">Вопрос ${q.idx+1}/${q.total}</span>
+      <span class="dim mono">Правильных подряд: <b style="color:var(--acid)">${q.right}</b></span>
+    </div>
+    <div class="hfont" style="font-size:17px;margin-bottom:14px">${item[0]}</div>
+    ${[1,2,3,4].map(i=>`<button class="btn" style="display:block;width:100%;margin-bottom:8px;text-align:left" onclick="quizAnswer(this,${i-1})">${item[i]}</button>`).join('')}`;
+}
+function quizAnswer(btn, i){
+  if(!quizRun || quizRun.answered) return;
+  quizRun.answered = true;
+  const item = QUIZ[quizRun.order[quizRun.idx]];
+  const ok = i === item[5];
+  btn.style.borderColor = ok ? 'var(--acid)' : 'var(--red)';
+  btn.style.boxShadow = `0 0 18px ${ok?'rgba(57,255,136,.5)':'rgba(255,59,107,.5)'}`;
+  if(ok){ snd(760,.2); quizRun.right++; }
+  else {
+    snd(180,.3,'sawtooth');
+    if(S.quizInsurance>0){ S.quizInsurance--; toast('🛡 Страховка спасла забег! Осталось: '+S.quizInsurance); }
+    else { toast('❌ Мимо. Забег прерван.', true); setTimeout(()=>{ endQuizFail(); }, 900); return; }
+  }
+  quizRun.idx++; quizRun.answered = false;
+  setTimeout(renderQuizQ, 350);
+}
+function endQuizFail(){
+  if(!quizRun) return;
+  const box = document.getElementById('quizPlay');
+  box.innerHTML = `<div style="text-align:center"><div style="font-size:40px">💀</div>
+    <div class="hfont" style="margin:8px 0">Забег прерван на вопросе ${quizRun.idx+1}</div>
+    <div class="dim">Правильных подряд: ${quizRun.right}. Награда только за все верные!</div>
+    <button class="btn btn-neon" style="margin-top:12px" onclick="startQuiz(${quizRun.total})">Ещё раз</button></div>`;
+  quizRun = null; save();
+}
+function finishQuiz(){
+  const q = quizRun;
+  const rewards = {10:50, 20:199, 50:999};
+  const rew = rewards[q.total] || 50;
+  addCur('green', rew);
+  S.quizBest[q.total] = true;
+  S.quizDone++;
+  confetti(60); snd(1000,.5);
+  toast(`🏆 Все ${q.total} верны! +${rew} ${gLabel(rew)}`);
+  document.getElementById('quizPlay').innerHTML = `<div style="text-align:center"><div style="font-size:44px">🏆</div>
+    <div class="hfont" style="margin:8px 0;color:var(--acid);font-size:22px">+${rew} зелени!</div>
+    <div class="dim">Все ${q.total} ответов верные. Легенда.</div>
+    <button class="btn btn-neon" style="margin-top:12px" onclick="startQuiz(${q.total})">Повторить</button></div>`;
+  addXP(q.total*2); save(); quizRun = null;
+}
+/* страховка за рубли */
+function buyInsurance(){
+  if(!pay('gold',5)) return;
+  S.quizInsurance++; toast('🛡 Страховка куплена! Одна ошибка не сломает забег'); save();
+}
+
+/* ============ QUEST ============ */
+const QUEST = {
+  start:{t:'Ты вылетел из универа. Скучный дождь, скучный город. Но у тебя в кармане завалялся жетон подпольного клуба DROPOUT. Что делаешь?', ch:[['Идти по адресу на жетоне','alley'],['Продать жетон на барахолке','sell'],['Позвонить незнакомому номеру на обороте','call']]},
+  alley:{t:'Переулок пахнет ламповым дымом и пиццей. Дверь с граффити «выпавшие отсюда». Внутри — распивай и шахматный клуб одновременно.', ch:[['Сесть за шахматы с местным авторитетом','chess'],['Спросить про работу','job'],['Тихо осмотреться','look']]},
+  sell:{t:'Барыга на барахолке глазеет на жетон: «Дам за него 500 зелени». Чувствуешь: вещь не простая.', ch:[['Продать — деньги есть деньги','sold'],['Отказаться и уйти','alley'],['Торговаться до 1000','haggle']]},
+  sold:{t:'Деньги на руках, но что-то неспокойно на душе. К вечеру за тобой начали ходить двое в спортивках.', ch:[['Бежать домой','home'],['Спрятаться в ТЦ','mall']]},
+  haggle:{t:'Барыга злится, но кладёт 1000 зелени. «Ты умеешь продавать», — шипит он. Может, это комплимент.', ch:[['Взять деньги и уйти','sold'],['Интересоваться, что за клуб всё-таки','alley']]},
+  call:{t:'«Слушай внимательно, — говорит голос. — Тебя выпустили не просто так. У тебя есть то, что нужно городу». Пауза. «Ты прийдёшь один».', ch:[['Идти один','alley'],['Спросить: «А что у меня есть?»','ask'],['Сбросить звонок','alley']]},
+  ask:{t:'«У тебя есть способность оставаться собой, когда все сгоняются за хайпом. Это редкость». Ты не понял, но мурашки пошли.', ch:[['Согласиться пойти','alley'],['Положить трубку','alone']]},
+  alone:{t:'Неделя проходит тихо. Слишком тихо. Однажды утром на дверях записка: «Последний шанс. Переулок 7».', ch:[['Идти','alley'],['Сжечь записку','burn']]},
+  burn:{t:'Записка горит и от неё исходит запах лаванды. Странно. В этот момент ты понимаешь, что уже никогда не будешь тем, кем был.', ch:[['Принять это и жить дальше','home'],['Всё-таки пойти в переулок','alley']]},
+  chess:{t:'Авторитет играет быстро. «Ты позволяешь себя разбивать, — говорит он. — В городе нельзя так». Партия проиграна, но урок усвоен.', ch:[['Попросить ещё партию','chess2'],['Спросить про клуб','club']]},
+  chess2:{t:'Вторая партия — ничья. Авторитет усмехается: «Учиться умеешь. Это дороже любого диплома».', rep:1, ch:[['Спросить про работу','job'],['Уйти с достоинством','home']]},
+  club:{t:'«DROPOUT — это не клуб. Это способ смотреть на мир. Мы не работаем на систему, мы играем по своим правилам».', rep:1, ch:[['Хочу в это дело','join'],['Звучит как секта — я пас','leave']]},
+  look:{t:'На стене — фотографии людей. Все в толстовках. В центре — пустая рамка. «Это место ждёт тебя», — шепчет кто-то за спиной.', ch:[['Обернуться','who'],['Разглядывать фото','club']]},
+  who:{t:'За спиной — кот. Кот в толстовке. Он смотрит так, будто знает твою маму и твои оценки.', rep:1, ch:[['Погладить кота','cat'],['Сесть за шахматы, делать вид что всё нормально','chess']]},
+  cat:{t:'Кот мурчит и ведёт тебя к задней комнате. Там — 12 человек играют в «квиз». «Ты вовремя, — говорят. — Турнир начинается».', rep:1, ch:[['Участвовать в турнире','join'],['Уйти тихонько','leave']]},
+  job:{t:'«Работа простая: зарабатывать зелень, жить красиво и не забывать, кто ты. Но есть нюанс — иногда придётся выбирать между деньгами и принципами».', ch:[['Деньги важнее','money'],['Принципы важнее','principle']]},
+  money:{t:'Тебе дают первое задание: продать партию «жучков» новичкам. Лёгкие деньги.', rep:-1, ch:[['Сделать','crooked'],['Отказаться','principle']]},
+  crooked:{t:'Деньги капают. Но в клубе начинают коситься. «Ты стал слишком похож на систему, от которой выпал», — говорят тебе.', rep:-1, ch:[['Исправиться','principle'],['Уйти в тень','dark']]},
+  dark:{t:'Ты уходишь в тень города. Зелень есть, но посмотришь в зеркало и не сразу узнаёшь себя.', ch:[['Вернуться и всё исправить','principle'],['Остаться в тени','darkend']]},
+  darkend:{t:'Ты стал тенью города. Богат, но одинок. Финал: «Король тени».', fin:true},
+  principle:{t:'«Уважение дороже зелени», — говоришь ты. В клубе переглядываются. Ты прошёл проверку, о которой не знал.', rep:2, ch:[['Вступить в DROPOUT','join'],['Пожить свободным','home']]},
+  join:{t:'Тебе выдали толстовку с надписью DROPOUT. Ты — свой. Но клуб просит: «Расскажи, зачем ты здесь?»', ch:[['Хочу менять правила','change'],['Хочу просто быть собой','bemyself']]},
+  change:{t:'«Амбициозно. Мы любим таких». Тебе дают ключ от клуба. Теперь твои идеи могут стать правилами.', rep:2, ch:[['Принять ключ','endLeader'],['Отказаться от ключа','endFree']]},
+  bemyself:{t:'«Это самое редкое, что можно хотеть», — отвечают. Клуб принимает тебя без условий.', rep:1, ch:[['Остаться в клубе','endMember'],['Пойти своим путём','endFree']]},
+  endLeader:{t:'Через год ты ведёшь клуб по-своему. Система всё ещё существует, но теперь у неё появился конкурент. Финал: «Новый авторитет».', fin:true},
+  endMember:{t:'Ты остаёшься в клубе. Не самый громкий, но самый настоящий. Финал: «Свой человек».', fin:true},
+  endFree:{t:'Ты уходишь со своим жетоном и свободой. Дорога открыта во все стороны. Финал: «Свободный игрок».', fin:true},
+  leave:{t:'Ты решаешь: это не твоё. Дверь клуба закрывается за спиной мягко, без обид. Город шумит дальше.', ch:[['Жить как жил','endCivil'],['Однажды всё-таки вернуться','comeback']]},
+  comeback:{t:'Спустя месяц ты снова стоишь у той двери с граффити. На этот раз — не колеблясь.', ch:[['Войти','alley']]},
+  endCivil:{t:'Ты живёшь обычной жизнью, но иногда вспоминаешь тот переулок с лёгкой улыбкой. Финал: «Обычный человек с секретом».', fin:true},
+  home:{t:'Дома горячий чай и тишина. Но жетон на столе напоминает: твой город ждёт тебя обратно. Финал: «Домашний филосов».', fin:true},
+  mall:{t:'В ТЦ шумно и безопасно. Ты забываешь о преследователях за пловом и роллами.', ch:[['Пережидать тут','home'],['Позвонить в клуб за помощью','clubHelp']]},
+  clubHelp:{t:'Клуб помогает: «Ты один из нас. Хотя ещё не вступил». Мистика.', rep:1, ch:[['Сказать спасибо и пойти в клуб','alley'],['Сказать спасибо и уехать из города','endRail']]},
+  endRail:{t:'Ты уезжаешь на вокзал, и поезд увозит тебя в новые горизонты. Финал: «Человек-дорога».', fin:true},
+};
+function renderQuest(){
+  const node = QUEST[S.questNode] || QUEST.start;
+  const box = document.getElementById('questBox');
+  if(node.fin){
+    if(!S.questDoneFinales.includes(S.questNode)) S.questDoneFinales.push(S.questNode);
+    addCur('green',100); addCur('bonus',5);
+    box.innerHTML = `<div style="text-align:center;padding:20px">
+      <div style="font-size:50px">🎬</div>
+      <div class="hfont" style="font-size:20px;margin:10px 0">${node.t}</div>
+      <div class="dim">Репутация: ${S.questRep>=0?'+':''}${S.questRep} · Открыто финалов: ${S.questDoneFinales.length}/8</div>
+      <div class="row" style="justify-content:center;margin-top:14px">
+        <button class="btn btn-neon" onclick="questRestart()">Начать заново</button>
+      </div></div>`;
+    confetti(40); save(); return;
+  }
+  let html = `<div class="dim mono" style="margin-bottom:8px">Репутация: ${S.questRep>=0?'+':''}${S.questRep}</div>`;
+  html += `<p style="line-height:1.8;margin-bottom:14px">${node.t}</p>`;
+  node.ch.forEach(([txt,to],i)=>{
+    if(to==='premium' && !S.gold){ return; }
+    html += `<button class="btn ${to==='premium'?'btn-gold liquid':''}" style="display:block;width:100%;margin-bottom:8px;text-align:left" onclick="questGo('${to}')">${txt}${to==='premium'?' 🔒 10 🟡':''}</button>`;
+  });
+  box.innerHTML = html;
+}
+function questGo(to){
+  const node = QUEST[S.questNode];
+  const ch = node.ch.find(c=>c[1]===to);
+  if(to==='premium' && !pay('gold',10)) return;
+  const next = QUEST[to];
+  if(next && next.rep) S.questRep += next.rep;
+  S.questNode = to; addXP(6); snd(440,.15); save(); renderQuest();
+}
+function questRestart(){ S.questNode='start'; S.questRep=0; save(); renderQuest(); }
+
+/* ============ CHAT ============ */
+function renderChat(){
+  const box = document.getElementById('chatBox');
+  if(!S.chat.length){
+    S.chat.push({who:'mgr', text:'Йо! Я менеджер DROPOUT 🎩 Спрашивай: промокоды, шоп, баланс — помогу. Если нужен живой человек — переброшу в Telegram.'});
+  }
+  box.innerHTML = S.chat.map(m=>`<div class="msg ${m.who==='me'?'me':'mgr'}">${m.text}</div>`).join('');
+  box.scrollTop = box.scrollHeight;
+  if(!document.getElementById('chatQuick').dataset.init){
+    document.getElementById('chatQuick').innerHTML = ['Где взять промокод?','Хочу приз из шопа','Не начислились бонусы'].map(q=>
+      `<button class="btn btn-sm" onclick="chatQuickSend('${q}')">${q}</button>`).join('');
+    document.getElementById('chatQuick').dataset.init = '1';
+  }
+}
+function chatQuickSend(t){ document.getElementById('chatInput').value = t; chatSend(); }
+function chatSend(){
+  const inp = document.getElementById('chatInput');
+  const t = (inp.value||'').trim();
+  if(!t) return;
+  S.chat.push({who:'me', text:t}); inp.value=''; renderChat(); save();
+  const low = t.toLowerCase();
+  let reply = null;
+  if(/привет|хай|йо|здравств/.test(low)) reply = 'Привет! Чем помогу — промокоды, шоп, баланс? 🎩';
+  else if(/промокод|промо/.test(low)) reply = `Все промокоды публикуются в нашем Telegram. Кликай и забирай 👇`;
+  else if(/приз|шоп|купить/.test(low)) reply = 'Шоп на бонусках: выбирай приз, жми «Получить в Telegram», менеджер подтвердит списание. Круто, да?';
+  else if(/баланс|валют|зелен|рубл|бонус/.test(low)) reply = `Сейчас у тебя: ${fmt(S.green)} зелени, ${fmt(S.gold)} рублей, ${fmt(S.bonus)} бонусок. Зелень фармишь, рубли покупаешь 1:1, бонуски заслуживаешь.`;
+  else if(/пополн|донат|оплат/.test(low)) reply = 'Пополнение рублей — кнопка «Пополнить» в шапке. Курс 1:1. В демо оплата заглушка, в проде — платёжный виджет.';
+  else if(/не начисли|пропал|баг|ошиб/.test(low)) reply = 'Понял, разбираюсь. Напиши ник и что именно не начислилось — если нужен живой менеджер, вот канал:';
+  else if(/менеджер|жив|человек/.test(low)) reply = 'Соединяю с живым менеджером! Он работает в Telegram:';
+  else reply = 'Хм, не понял вопрос. Но живой менеджер точно поможет — вот ссылка в Telegram 👇';
+  const typing = document.createElement('div'); typing.className='typing'; typing.textContent='менеджер печатает…';
+  document.getElementById('chatBox').appendChild(typing);
+  setTimeout(()=>{
+    typing.remove();
+    if(reply.endsWith('👇') || reply.includes('канал')){
+      S.chat.push({who:'mgr', text:reply + `<br><a class="tglink btn btn-tg btn-sm" href="${TG_LINK}" target="_blank">✈️ Открыть @dropoutmanager</a>`});
+    } else {
+      S.chat.push({who:'mgr', text:reply});
+    }
+    renderChat(); save();
+  }, 1200+Math.random()*1800);
+}
+function goChat(){ go('chat'); }
+
+/* ============ PROFILE ============ */
+const TITLES = ['Выпавший','Мем-лорд','Король Скамбиди','Легенда Переулка'];
+function renderProfile(){
+  document.getElementById('nickInput').value = S.nick;
+  document.getElementById('profAv').textContent = '😎';
+  document.getElementById('profTitle').textContent = '· ' + S.title;
+  document.getElementById('profLvl').textContent = `Уровень ${S.lvl} · XP ${fmt(Math.floor(S.xp))}/${fmt(Math.round(xpNeed(S.lvl)))}`;
+  document.getElementById('xpBar').style.width = Math.min(100, S.xp/xpNeed(S.lvl)*100)+'%';
+  const s = S.stats;
+  document.getElementById('statsBox').innerHTML = [
+    ['Тапов сделано', fmt(S.taps)],
+    ['Кейсов открыто', fmt((s.cases||0))],
+    ['Спинов слотов', fmt(s.slots||0)],
+    ['Крашов выиграно/проиграно', `${s.crashWin||0} / ${s.crashLose||0}`],
+    ['Мин: побед', fmt(s.mineWin||0)],
+    ['Бросков костей', fmt(s.dice||0)],
+    ['Квизов пройдено', fmt(S.quizDone)],
+    ['Финалов квеста', `${S.questDoneFinales.length}/8`],
+    ['Обменов валюты', fmt(S.exchHist.length)],
+    ['Просмотров рекламы', fmt(S.seenAd)],
+  ].map(([k,v])=>`<div class="statline"><span>${k}</span><b class="mono">${v}</b></div>`).join('');
+  const achDefs = [
+    ['first_tap','Рука-базука','Сделать 100 тапов', S.taps>=100],
+    ['first_case','Открывашка','Открыть первый кейс', (s.cases||0)>=1],
+    ['casino1','Первая ставка','Сделать ставку в казино', (s.slots||0)+(s.dice||0)+(s.mineWin||0)+(s.crashWin||0)+(s.crashLose||0) > 0],
+    ['quiz1','Знаток мемов','Пройти любой квиз целиком', Object.keys(S.quizBest).length>0],
+    ['quest1','Сюжетчик','Получить первый финал квеста', S.questDoneFinales.length>0],
+    ['legend','Мем-лорд','Получить легендарный мем', S.inv.some(m=>m.rar==='l'||m.rar==='m') || S.gotLegend],
+  ];
+  document.getElementById('achBox').innerHTML = achDefs.map(([id,name,desc,got])=>
+    `<div class="statline"><span>${got?'🏅':'🔒'} ${name} <span class="dim" style="font-size:12px">— ${desc}</span></span><b>${got?'✔':'—'}</b></div>`).join('');
+}
+function saveNick(){
+  const v = (document.getElementById('nickInput').value||'').trim();
+  if(!v){ toast('Ник не может быть пустым', true); return; }
+  S.nick = v.slice(0,20); toast('Ник обновлён: '+S.nick); save();
+}
+function wipeData(){
+  modal(`<h3>🗑 Удалить мои данные?</h3><p class="dim">Весь прогресс, баланс и чат будут удалены безвозвратно. Это действие нельзя отменить.</p><div class="row" style="margin-top:14px"><button class="btn btn-red" onclick="wipeConfirm()">Да, удалить</button><button class="btn" onclick="closeModal()">Отмена</button></div>`);
+}
+function wipeConfirm(){ localStorage.removeItem(SAVE_KEY); location.reload(); }
+
+/* ============ ADMIN ============ */
+let admOk = false;
+function renderAdmin(){
+  const p = document.getElementById('admPanel');
+  if(!admOk){
+    p.style.display='none'; return;
+  }
+  p.style.display='';
+  p.innerHTML = `
+    <div class="hfont" style="margin-bottom:10px">Выдача ресурсов</div>
+    <div class="row"><input type="number" id="admAmt" value="1000" style="width:120px">
+      <button class="btn btn-green btn-sm" onclick="admGive('green')">+ Зелень</button>
+      <button class="btn btn-gold btn-sm" onclick="admGive('gold')">+ Рубли</button>
+      <button class="btn btn-sm btn-neon" onclick="admGive('bonus')">+ Бонуски</button></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-sm btn-gold" onclick="admVip()">VIP на 30 дней</button>
+      <button class="btn btn-sm btn-gold" onclick="admBoost()">Буст ×2 навсегда</button>
+      <button class="btn btn-sm btn-neon" onclick="admIns()">Страховка ×10</button>
+      <button class="btn btn-sm btn-neon" onclick="admLvl()">+5 уровней</button>
+    </div>
+    <div class="hr"></div>
+    <div class="hfont" style="margin-bottom:8px">Статистика игрока</div>
+    <div id="admStats"></div>
+    <div class="hr"></div>
+    <button class="btn btn-red" onclick="admReset()">Полный сброс прогресса</button>`;
+  admStats();
+}
+function admLogin(){
+  if(document.getElementById('admPass').value === 'admin'){
+    admOk = true; renderAdmin(); toast('🛠 Доступ открыт');
+  } else { toast('Неверный пароль', true); }
+}
+function admGive(cur){
+  const n = parseInt(document.getElementById('admAmt').value)||0;
+  addCur(cur,n); toast(`🛠 Выдано: ${n}`); admStats();
+}
+function admVip(){ S.vip = Date.now()+30*86400000; toast('🛠 VIP на 30 дней'); save(); }
+function admBoost(){ S.boostUntil = Date.now()+100*365*86400000; toast('🛠 Буст ×2 навсегда'); save(); }
+function admIns(){ S.quizInsurance += 10; toast('🛠 Страховок: '+S.quizInsurance); save(); }
+function admLvl(){ S.lvl+=5; toast('🛠 Уровень: '+S.lvl); save(); }
+function admStats(){
+  const s = S.stats;
+  document.getElementById('admStats').innerHTML = [
+    ['Ник', S.nick], ['Уровень', S.lvl],
+    ['Зелень', fmt(S.green)], ['Рубли', fmt(S.gold)], ['Бонуски', fmt(S.bonus)],
+    ['Тапов', fmt(S.taps)], ['Кейсов', fmt(s.cases||0)], ['Квизов', fmt(S.quizDone)],
+    ['Финалов квеста', S.questDoneFinales.length], ['VIP', vipOn()?'активен':'нет'],
+  ].map(([k,v])=>`<div class="statline"><span>${k}</span><b class="mono">${v}</b></div>`).join('');
+}
+function admReset(){
+  modal(`<h3>🛠 Полный сброс</h3><p class="dim">Все данные игрока будут удалены. Продолжить?</p><div class="row" style="margin-top:12px"><button class="btn btn-red" onclick="localStorage.removeItem(SAVE_KEY);location.reload()">Да, сбросить</button><button class="btn" onclick="closeModal()">Отмена</button></div>`);
+}
+
+/* ============ LEGAL ============ */
+const LEGAL = {
+  privacy:{title:'Политика конфиденциальности', body:`
+    <p><b>Последнее обновление: октябрь 2026</b></p>
+    <p style="margin-top:10px"><b>1. Какие данные обрабатываются</b><br>
+    Сайт DROPOUT работает полностью в твоём браузере. Вся информация о прогрессе — баланс (зелень, рубли, бонуски), уровень, склад мемов, история чата, статистика — хранится только в localStorage твоего браузера на твоём устройстве. Мы не отправляем эти данные на сервер и не собираем их.</p>
+    <p style="margin-top:10px"><b>2. Что мы НЕ делаем</b><br>
+    Не собираем персональные данные, не используем трекеры, не передаём данные третьим лицам. Переходы по ссылкам в Telegram происходят по твоей инициативе.</p>
+    <p style="margin-top:10px"><b>3. В продакшене</b><br>
+    При подключении платёжных систем, аналитики или серверной части список обрабатываемых данных изменится (например, e-mail для аккаунта). Мы уведомим и обновим эту политику до таких изменений.</p>
+    <p style="margin-top:10px"><b>4. Твои права</b><br>
+    Ты можешь в любой момент удалить все свои данные кнопкой «Удалить мои данные» в профиле — localStorage будет полностью очищен.</p>
+    <p style="margin-top:10px"><b>5. Контакты</b><br>
+    Вопросы по конфиденциальности — в Telegram-канале: <a href="${TG_LINK}" target="_blank" style="color:var(--tg)">@dropoutmanager</a>.</p>`},
+  terms:{title:'Пользовательское соглашение', body:`
+    <p><b>Последнее обновление: октябрь 2026</b></p>
+    <p style="margin-top:10px"><b>1. О сервисе</b><br>
+    DROPOUT — развлекательный сайт-игра. Все внутриигровые сущности (зелень 🟢, рубли 🟡, бонуски 🎁, мемы, кейсы) — виртуальные объекты для развлечения.</p>
+    <p style="margin-top:10px"><b>2. О валютах</b><br>
+    Виртуальные валюты не являются деньгами, ценными бумагами или иным имуществом и не подлежат обмену на реальные денежные средства. Рубли на балансе — виртуальная премиум-валюта, приобретаемая по курсу 1:1 для использования внутри сайта. «Рубли» в названии — игровая условность, не реальные деньги.</p>
+    <p style="margin-top:10px"><b>3. О шопе</b><br>
+    Призы из каталога шопа выдаются менеджером через Telegram-канал по согласованию. Списание бонусок подтверждается менеджером в чате. Права на призы и порядок их выдачи определяет администрация.</p>
+    <p style="margin-top:10px"><b>4. Запрещено</b><br>
+    Читы, накрутка валют, мультиаккаунты, попытки обхода механик, оскорбления в чате. Нарушения — коррекция баланса или блокировка.</p>
+    <p style="margin-top:10px"><b>5. Права администрации</b><br>
+    Администрация вправе изменять баланс, правила и экономику, а также вносить изменения в сервис. Существенные изменения публикуются в Telegram-канале.</p>
+    <p style="margin-top:10px"><b>6. Отказ от ответственности</b><br>
+    Сервис предоставляется «как есть». Администрация не несёт ответственности за потерю прогресса из-за очистки данных браузера.</p>`},
+  disclaimer:{title:'Дисклеймер об игровой механике', body:`
+    <p style="margin-top:6px"><b>Важно и честно:</b></p>
+    <p style="margin-top:10px">Игровые механики с кэшаутом — краш 🚀, мины 💣, слоты 🎰, колесо 🎡, кости 🎲 — это развлекательные механики на <b>виртуальные</b> бонуски и зелень.</p>
+    <p style="margin-top:10px">Это <b>не азартная игра на реальные деньги</b>. Выигрыши нельзя вывести деньгами. Ставки делаются на игровые валюты, которые не имеют реальной стоимости.</p>
+    <p style="margin-top:10px">Механики честные: шансы и математическое ожидание не в пользу игрока — как в настоящих развлекательных мини-играх. Проигранная зелень или бонуски — часть игры.</p>
+    <p style="margin-top:10px">Играй в удовольствие. Если игра перестала быть удовольствием — сделай перерыв.</p>`},
+  shop:{title:'Правила шопа', body:`
+    <p style="margin-top:6px"><b>Как работает шоп на бонусках:</b></p>
+    <p style="margin-top:10px"><b>1.</b> Бонуски 🎁 зарабатываются активностью — их нельзя купить.</p>
+    <p style="margin-top:10px"><b>2.</b> Выбираешь приз в каталоге, жмёшь «Получить в Telegram». Откроется канал <a href="${TG_LINK}" target="_blank" style="color:var(--tg)">@dropoutmanager</a> с предзаполненной заявкой.</p>
+    <p style="margin-top:10px"><b>3.</b> Бонуски списываются сразу — менеджер в чате подтверждает выдачу приза.</p>
+    <p style="margin-top:10px"><b>4.</b> Если менеджер не подтвердил выдачу (технический сбой, нарушение правил) — бонусы возвращаются.</p>
+    <p style="margin-top:10px"><b>5.</b> Один приз — одна заявка. Дубликаты не обрабатываются.</p>
+    <p style="margin-top:10px"><b>6.</b> Каталог и цены может меняться — актуальный список в шопе и в канале.</p>`},
+};
+function openLegal(k){
+  const l = LEGAL[k]; if(!l) return;
+  modal(`<h3>${l.title}</h3><div class="dim" style="line-height:1.75;font-size:13.5px">${l.body}</div>
+  <div style="margin-top:14px;text-align:right"><button class="btn btn-sm" onclick="closeModal()">Понял</button></div>`);
+}
+
+/* ============ INIT ============ */
+function initAll(){
+  load();
+  buildTabs(); renderWallet(); buildTicker(); initParticles(); tickParticles();
+  go('world');
+  /* glitch logo occasionally */
+  setInterval(()=>{
+    const l = document.getElementById('logo');
+    l.classList.add('glitch'); setTimeout(()=>l.classList.remove('glitch'), 400);
+  }, 6000);
+}
+document.addEventListener('DOMContentLoaded', initAll);
+</script>
+</body>
+</html>
